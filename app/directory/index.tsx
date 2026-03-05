@@ -11,6 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Colors } from '../../constants/colors';
+import { Fonts } from '../../constants/fonts';
 
 type FilterType = 'All' | 'Mental Health' | 'Rehab' | 'Hospitals' | 'Detox' | 'Sober Living';
 
@@ -190,7 +191,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 20,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
     color: Colors.textPrimary,
   },
   locationRow: {
@@ -242,7 +243,7 @@ const styles = StyleSheet.create({
   },
   chipText: {
     fontSize: 13,
-    fontWeight: '500',
+    fontFamily: Fonts.medium,
     color: Colors.chipTextInactive,
   },
   chipTextActive: {
@@ -276,7 +277,7 @@ const styles = StyleSheet.create({
   },
   cardName: {
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
     color: Colors.textPrimary,
     marginBottom: 3,
   },
@@ -313,7 +314,7 @@ const styles = StyleSheet.create({
   },
   mapButtonText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: Fonts.semiBold,
     color: Colors.bgDark,
   },
 });

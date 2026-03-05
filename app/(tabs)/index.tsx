@@ -6,10 +6,12 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Pressable,
+  Image,
 } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
+import { Fonts } from '../../constants/fonts';
 
 const QUOTES = [
   '✨ Even on tough days, remember: You\'ve got this.',
@@ -45,23 +47,23 @@ export default function HomeScreen() {
             <View style={styles.popup}>
               <TouchableOpacity
                 style={styles.popupItem}
-                onPress={() => { setShowPopup(false); }}
+                onPress={() => setShowPopup(false)}
               >
-                <Ionicons name="person-circle-outline" size={22} color={Colors.bgDark} />
+                <Ionicons name="person-circle-outline" size={22} color={Colors.textDark} />
                 <Text style={styles.popupText}>Profile</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.popupItem}
-                onPress={() => { setShowPopup(false); }}
+                onPress={() => setShowPopup(false)}
               >
-                <Ionicons name="share-social-outline" size={22} color={Colors.bgDark} />
+                <Ionicons name="share-social-outline" size={22} color={Colors.textDark} />
                 <Text style={styles.popupText}>Share</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.popupItem}
                 onPress={() => { setShowPopup(false); router.push('/directory'); }}
               >
-                <Ionicons name="list-outline" size={22} color={Colors.bgDark} />
+                <Ionicons name="list-outline" size={22} color={Colors.textDark} />
                 <Text style={styles.popupText}>Directory</Text>
               </TouchableOpacity>
             </View>
@@ -70,12 +72,14 @@ export default function HomeScreen() {
 
         {/* Logo */}
         <View style={styles.logoContainer}>
-          <View style={styles.logoBox}>
-            <Text style={styles.logoText}>G</Text>
-          </View>
+          <Image
+            source={require('../../assets/logo.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
         </View>
 
-        {/* Illustration Placeholder */}
+        {/* Illustration */}
         <View style={styles.illustrationContainer}>
           <View style={styles.illustration}>
             <Text style={styles.illustrationEmoji}>🧠</Text>
@@ -122,7 +126,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 16,
     top: 64,
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.surfaceWhite,
     borderRadius: 16,
     paddingVertical: 8,
     minWidth: 180,
@@ -142,26 +146,17 @@ const styles = StyleSheet.create({
   },
   popupText: {
     fontSize: 15,
-    fontWeight: '500',
-    color: Colors.bgDark,
+    fontFamily: Fonts.semiBold,
+    color: Colors.textDark,
   },
   logoContainer: {
     alignItems: 'center',
-    marginTop: 24,
-    marginBottom: 32,
+    marginTop: 16,
+    marginBottom: 24,
   },
-  logoBox: {
-    width: 80,
-    height: 80,
-    borderRadius: 20,
-    backgroundColor: Colors.teal,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoText: {
-    fontSize: 44,
-    fontWeight: '900',
-    color: Colors.bgDark,
+  logo: {
+    width: 110,
+    height: 110,
   },
   illustrationContainer: {
     alignItems: 'center',
@@ -185,9 +180,9 @@ const styles = StyleSheet.create({
   },
   quote: {
     fontSize: 18,
+    fontFamily: Fonts.medium,
     color: Colors.textPrimary,
     textAlign: 'center',
-    lineHeight: 26,
-    fontWeight: '400',
+    lineHeight: 28,
   },
 });

@@ -12,6 +12,7 @@ import {
 import { router } from 'expo-router';
 import { supabase } from '../../lib/supabase';
 import { Colors } from '../../constants/colors';
+import { Fonts } from '../../constants/fonts';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -89,7 +90,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.bgPrimary,
   },
   inner: {
     flex: 1,
@@ -98,27 +99,29 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
     color: Colors.textPrimary,
     marginBottom: 6,
   },
   subtitle: {
     fontSize: 15,
+    fontFamily: Fonts.regular,
     color: Colors.textSecondary,
     marginBottom: 32,
   },
   input: {
-    backgroundColor: Colors.surface,
+    backgroundColor: 'rgba(255,255,255,0.12)',
     borderWidth: 1,
     borderColor: Colors.border,
     borderRadius: 10,
     padding: 14,
     fontSize: 15,
+    fontFamily: Fonts.regular,
     color: Colors.textPrimary,
     marginBottom: 12,
   },
   button: {
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.bgMedium,
     borderRadius: 10,
     padding: 16,
     alignItems: 'center',
@@ -131,15 +134,16 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: Fonts.bold,
   },
   linkText: {
     textAlign: 'center',
     color: Colors.textSecondary,
+    fontFamily: Fonts.regular,
     fontSize: 14,
   },
   link: {
-    color: Colors.primary,
-    fontWeight: '600',
+    color: Colors.teal,
+    fontFamily: Fonts.semiBold,
   },
 });
