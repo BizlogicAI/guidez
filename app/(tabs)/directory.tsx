@@ -219,9 +219,10 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   filterScroll: {
-    height: 56,
+    height: 52,
     flexShrink: 0,
-    marginVertical: 12,
+    marginTop: 10,
+    marginBottom: 4,
   },
   filterContent: {
     paddingHorizontal: 16,

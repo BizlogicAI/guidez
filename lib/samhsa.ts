@@ -54,15 +54,12 @@ export async function fetchFacilities(
   distance = 25,
   pageSize = 30
 ): Promise<Facility[]> {
-  const params = new URLSearchParams({
-    sAddr: `${longitude},${latitude}`,
-    limitType: '0',
-    limitValue: String(distance),
-    pageSize: String(pageSize),
-    page: '1',
-  });
+  // sAddr must not have the comma URL-encoded — build manually
+  const url =
+    `${BASE_URL}?sAddr=${longitude},${latitude}` +
+    `&limitType=0&limitValue=${distance}&pageSize=${pageSize}&page=1`;
 
-  const res = await fetch(`${BASE_URL}?${params.toString()}`);
+  const res = await fetch(url);
 
   if (!res.ok) {
     throw new Error(`SAMHSA API error: ${res.status}`);
