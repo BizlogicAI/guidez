@@ -5,11 +5,11 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   FlatList,
   ActivityIndicator,
   Linking,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
@@ -62,11 +62,13 @@ function EmptyState({ message }: { message: string }) {
 }
 
 export default function DirectoryScreen() {
+  const insets = useSafeAreaInsets();
   const [activeFilter, setActiveFilter] = useState<FilterType>('All');
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [loading, setLoading] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [locationLabel, setLocationLabel] = useState('Your Location');
+  const [debugCoords, setDebugCoords] = useState<string | null>(null);
 
   const loadFacilities = useCallback(async () => {
     setLoading(true);
@@ -80,8 +82,10 @@ export default function DirectoryScreen() {
     }
 
     try {
-      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
       const { latitude, longitude } = loc.coords;
+
+      setDebugCoords(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
 
       const [place] = await Location.reverseGeocodeAsync({ latitude, longitude });
       if (place) {
@@ -107,21 +111,22 @@ export default function DirectoryScreen() {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
-        <SafeAreaView>
-          <View style={styles.headerRow}>
-            <View>
-              <Text style={styles.headerTitle}>Find Resources</Text>
-              <View style={styles.locationRow}>
-                <Ionicons name="location-outline" size={14} color={Colors.textSecondary} />
-                <Text style={styles.locationText}>{locationLabel}</Text>
-              </View>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+        <View style={styles.headerRow}>
+          <View>
+            <Text style={styles.headerTitle}>Find Resources</Text>
+            <View style={styles.locationRow}>
+              <Ionicons name="location-outline" size={14} color={Colors.textSecondary} />
+              <Text style={styles.locationText}>{locationLabel}</Text>
             </View>
-            <TouchableOpacity style={styles.searchIcon} onPress={loadFacilities}>
-              <Ionicons name="refresh-outline" size={24} color={Colors.textPrimary} />
-            </TouchableOpacity>
+            {debugCoords && (
+              <Text style={styles.debugText}>GPS: {debugCoords}</Text>
+            )}
           </View>
-        </SafeAreaView>
+          <TouchableOpacity style={styles.searchIcon} onPress={loadFacilities}>
+            <Ionicons name="refresh-outline" size={24} color={Colors.textPrimary} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Filter chips */}
@@ -199,7 +204,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 16,
+  },
+  debugText: {
+    fontSize: 10,
+    color: 'rgba(255,255,255,0.5)',
+    marginTop: 2,
   },
   headerTitle: {
     fontSize: 20,
