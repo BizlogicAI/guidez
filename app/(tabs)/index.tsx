@@ -156,13 +156,11 @@ function DailyCheckinCard({ userId }: { userId: string }) {
       {checkedInMood ? (
         <View style={styles.checkinDone}>
           <Text style={styles.checkinDoneEmoji}>{selectedOption?.emoji}</Text>
-          <View style={{ flex: 1 }}>
+          <View>
             <Text style={styles.checkinDoneTitle}>Checked in today</Text>
-            <Text style={styles.checkinDoneSub}>Feeling {selectedOption?.label.toLowerCase()}</Text>
+            <Text style={styles.checkinDoneSub}>Feeling {selectedOption?.label.toLowerCase()} · See you tomorrow</Text>
           </View>
-          <TouchableOpacity onPress={() => setCheckedInMood(null)} activeOpacity={0.7}>
-            <Text style={styles.changeText}>Change</Text>
-          </TouchableOpacity>
+          <Ionicons name="checkmark-circle" size={22} color={Colors.teal} />
         </View>
       ) : (
         <>
@@ -317,7 +315,6 @@ const styles = StyleSheet.create({
   checkinDoneEmoji: { fontSize: 32 },
   checkinDoneTitle: { fontSize: 14, fontFamily: Fonts.bold, color: Colors.textPrimary },
   checkinDoneSub: { fontSize: 12, fontFamily: Fonts.regular, color: Colors.textMuted, marginTop: 2 },
-  changeText: { fontSize: 12, fontFamily: Fonts.semiBold, color: Colors.teal },
 
   // Illustration
   illustrationContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
