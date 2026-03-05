@@ -8,6 +8,7 @@ import {
   Image,
   Animated,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
 import { Fonts } from '../../constants/fonts';
 
@@ -110,6 +111,14 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.headerSpacer} />
+          <TouchableOpacity style={styles.notifButton} activeOpacity={0.7}>
+            <Ionicons name="notifications-outline" size={26} color={Colors.textPrimary} />
+          </TouchableOpacity>
+        </View>
+
         {/* Logo */}
         <View style={styles.logoContainer}>
           <Image
@@ -137,9 +146,22 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    paddingHorizontal: 16,
+    paddingTop: 8,
+  },
+  headerSpacer: {
+    flex: 1,
+  },
+  notifButton: {
+    padding: 4,
+  },
   logoContainer: {
     alignItems: 'center',
-    marginTop: 16,
+    marginTop: 4,
     marginBottom: 8,
   },
   logo: {
