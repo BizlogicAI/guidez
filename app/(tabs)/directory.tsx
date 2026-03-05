@@ -17,6 +17,7 @@ import { router } from 'expo-router';
 import { Colors } from '../../constants/colors';
 import { Fonts } from '../../constants/fonts';
 import { fetchFacilities, storeFacilities, Facility, FacilityType } from '../../lib/samhsa';
+import { fetchHospitals } from '../../lib/hospitals';
 
 type FilterType = 'All' | FacilityType;
 
@@ -100,9 +101,22 @@ export default function DirectoryScreen() {
         }
       }
 
-      const results = await fetchFacilities(lat, lng, distance);
-      storeFacilities(results);
-      setFacilities(results);
+      const [samhsaResults, hospitalResults] = await Promise.all([
+        fetchFacilities(lat, lng, distance),
+        fetchHospitals(lat, lng, distance),
+      ]);
+
+      // Merge and deduplicate by name+city (hospital may appear in both sources)
+      const seen = new Set<string>();
+      const merged: Facility[] = [];
+      for (const f of [...samhsaResults, ...hospitalResults]) {
+        const key = `${f.name}|${f.city}`.toLowerCase();
+        if (!seen.has(key)) { seen.add(key); merged.push(f); }
+      }
+      merged.sort((a, b) => a.distance - b.distance);
+
+      storeFacilities(merged);
+      setFacilities(merged);
     } catch {
       setLocationError('Could not load facilities. Check your internet connection and try again.');
     }
