@@ -48,9 +48,6 @@ const OSM_QUERIES: Record<FacilityType, string[]> = {
     '"social_facility"="group_home"',
     '"social_facility"="halfway_house"',
     '"social_facility:for"="addicted"',
-    '"social_facility"="shelter"',
-    '"amenity"="social_facility"',
-    '"healthcare"="social_care"',
   ],
 };
 

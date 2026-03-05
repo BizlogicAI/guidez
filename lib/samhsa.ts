@@ -66,7 +66,7 @@ function mapType(row: SAMHSARow): FacilityType {
 
   // Use service descriptions as fallback for SA/BUPREN/HRSA facilities
   const desc = (row.services ?? [])
-    .map((s) => s.f3 ?? '')
+    .flatMap((s) => [s.f1 ?? '', s.f2 ?? '', s.f3 ?? ''])
     .join(' ')
     .toLowerCase();
 
@@ -81,7 +81,7 @@ function mapType(row: SAMHSARow): FacilityType {
     desc.includes('oxford house') ||
     desc.includes('supportive housing')
   ) return 'Sober Living';
-  if (desc.includes('residential') && (code === 'SA' || code === 'HRSA')) return 'Sober Living';
+  if ((desc.includes('sober home') || desc.includes('recovery home')) && (code === 'SA' || code === 'HRSA')) return 'Sober Living';
 
   return 'Rehab';
 }
