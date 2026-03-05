@@ -81,8 +81,8 @@ export default function FacilityDetailScreen() {
   };
 
   const handleReviews = () => {
-    const name = encodeURIComponent(facility.name);
-    Linking.openURL(`https://www.google.com/maps/search/${name}/@${facility.latitude},${facility.longitude},17z`);
+    const q = encodeURIComponent(`${facility.name} ${facility.city} ${facility.state}`);
+    Linking.openURL(`https://maps.google.com/?q=${q}`);
   };
 
   return (
