@@ -32,8 +32,12 @@ function FacilityCard({ item }: { item: Facility }) {
   };
 
   const handleReviews = () => {
-    const query = encodeURIComponent(`${item.name} ${item.city} ${item.state}`);
-    Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${query}`);
+    const name = encodeURIComponent(item.name);
+    // Opens Google Maps pinned to the facility's exact coordinates with its name —
+    // lands directly on the place card, one tap to see reviews
+    Linking.openURL(
+      `https://www.google.com/maps/search/${name}/@${item.latitude},${item.longitude},17z`
+    );
   };
 
   return (
