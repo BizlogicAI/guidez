@@ -11,6 +11,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../lib/supabase';
 import { checkUsernameAvailability, createProfile } from '../../lib/profiles';
 import { Colors } from '../../constants/colors';
@@ -76,6 +77,9 @@ export default function SignupScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView contentContainerStyle={styles.inner} keyboardShouldPersistTaps="handled">
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Ionicons name="chevron-back" size={24} color={Colors.textPrimary} />
+        </TouchableOpacity>
         <Text style={styles.title}>Create Account</Text>
         <Text style={styles.subtitle}>Join the Guidez community</Text>
 
@@ -140,6 +144,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.bgPrimary,
+  },
+  backButton: {
+    marginBottom: 16,
+    alignSelf: 'flex-start',
+    padding: 4,
   },
   inner: {
     padding: 24,

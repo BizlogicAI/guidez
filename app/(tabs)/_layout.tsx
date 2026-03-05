@@ -33,10 +33,10 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="messages"
+        name="feed"
         options={{
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="chatbox" size={size} color={color} />
+            <Ionicons name="layers" size={size} color={color} />
           ),
         }}
       />
@@ -57,14 +57,6 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="create"
-        options={{
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="add" size={size + 4} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="profile"
         options={{
           tabBarIcon: ({ color, size }) => (
@@ -72,6 +64,10 @@ export default function TabLayout() {
           ),
         }}
       />
+
+      {/* Hidden — files kept but removed from tab bar */}
+      <Tabs.Screen name="messages" options={{ href: null }} />
+      <Tabs.Screen name="create" options={{ href: null }} />
     </Tabs>
   );
 }

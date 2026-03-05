@@ -1,16 +1,13 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   SafeAreaView,
-  Pressable,
   Image,
   Animated,
 } from 'react-native';
-import { router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
 import { Fonts } from '../../constants/fonts';
 
@@ -110,48 +107,9 @@ function CyclingMessage() {
 }
 
 export default function HomeScreen() {
-  const [showPopup, setShowPopup] = useState(false);
-
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.headerIcon}
-            onPress={() => setShowPopup(!showPopup)}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="person-circle-outline" size={30} color={Colors.textPrimary} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.headerIcon} activeOpacity={0.7}>
-            <Ionicons name="notifications-outline" size={28} color={Colors.textPrimary} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Profile Popup */}
-        {showPopup && (
-          <Pressable style={styles.popupOverlay} onPress={() => setShowPopup(false)}>
-            <View style={styles.popup}>
-              <TouchableOpacity style={styles.popupItem} onPress={() => setShowPopup(false)}>
-                <Ionicons name="person-circle-outline" size={22} color={Colors.textDark} />
-                <Text style={styles.popupText}>Profile</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.popupItem} onPress={() => setShowPopup(false)}>
-                <Ionicons name="share-social-outline" size={22} color={Colors.textDark} />
-                <Text style={styles.popupText}>Share</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.popupItem}
-                onPress={() => { setShowPopup(false); router.push('/(tabs)/directory'); }}
-              >
-                <Ionicons name="list-outline" size={22} color={Colors.textDark} />
-                <Text style={styles.popupText}>Directory</Text>
-              </TouchableOpacity>
-            </View>
-          </Pressable>
-        )}
-
         {/* Logo */}
         <View style={styles.logoContainer}>
           <Image
@@ -179,61 +137,15 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 8,
-  },
-  headerIcon: {
-    padding: 4,
-  },
-  popupOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 10,
-  },
-  popup: {
-    position: 'absolute',
-    right: 16,
-    top: 64,
-    backgroundColor: Colors.surfaceWhite,
-    borderRadius: 16,
-    paddingVertical: 8,
-    minWidth: 180,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 8,
-    zIndex: 11,
-  },
-  popupItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    gap: 12,
-  },
-  popupText: {
-    fontSize: 15,
-    fontFamily: Fonts.semiBold,
-    color: Colors.textDark,
-  },
   logoContainer: {
     alignItems: 'center',
-    marginTop: 8,
-    marginBottom: 16,
+    marginTop: 16,
+    marginBottom: 8,
   },
   logo: {
-    width: 110,
-    height: 110,
-    borderRadius: 22,
+    width: 160,
+    height: 160,
+    borderRadius: 28,
     overflow: 'hidden',
   },
   illustrationContainer: {
