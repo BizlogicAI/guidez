@@ -12,7 +12,9 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { supabase } from '../../lib/supabase';
+import { checkUsernameAvailability, createProfile } from '../../lib/profiles';
 import { Colors } from '../../constants/colors';
+import { Fonts } from '../../constants/fonts';
 
 export default function SignupScreen() {
   const [email, setEmail] = useState('');
@@ -32,24 +34,40 @@ export default function SignupScreen() {
     }
 
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+
+    const available = await checkUsernameAvailability(username);
+    if (!available) {
+      Alert.alert('Username Taken', 'That username is already in use. Please choose another.');
+      setLoading(false);
+      return;
+    }
+
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: {
-        data: { username },
-      },
+      options: { data: { username: username.toLowerCase().trim() } },
     });
-    setLoading(false);
 
     if (error) {
+      setLoading(false);
       Alert.alert('Sign Up Failed', error.message);
-    } else {
-      Alert.alert(
-        'Check your email',
-        'We sent you a confirmation link. Please verify your email before signing in.',
-        [{ text: 'OK', onPress: () => router.replace('/auth/login') }]
-      );
+      return;
     }
+
+    if (data.user) {
+      try {
+        await createProfile(data.user.id, username.toLowerCase().trim());
+      } catch {
+        // Profile creation failed — non-blocking, user can set username later
+      }
+    }
+
+    setLoading(false);
+    Alert.alert(
+      'Account Created',
+      'Welcome to Guidez! You can now sign in.',
+      [{ text: 'Sign In', onPress: () => router.replace('/auth/login') }]
+    );
   };
 
   return (
@@ -121,7 +139,7 @@ export default function SignupScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.bgPrimary,
   },
   inner: {
     padding: 24,
@@ -130,33 +148,36 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: '700',
+    fontFamily: Fonts.bold,
     color: Colors.textPrimary,
     marginBottom: 6,
   },
   subtitle: {
     fontSize: 15,
+    fontFamily: Fonts.regular,
     color: Colors.textSecondary,
     marginBottom: 32,
   },
   input: {
-    backgroundColor: Colors.surface,
+    backgroundColor: 'rgba(255,255,255,0.12)',
     borderWidth: 1,
     borderColor: Colors.border,
     borderRadius: 10,
     padding: 14,
     fontSize: 15,
+    fontFamily: Fonts.regular,
     color: Colors.textPrimary,
     marginBottom: 12,
   },
   disclaimer: {
     fontSize: 12,
+    fontFamily: Fonts.regular,
     color: Colors.textMuted,
     marginBottom: 16,
     lineHeight: 18,
   },
   button: {
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.bgMedium,
     borderRadius: 10,
     padding: 16,
     alignItems: 'center',
@@ -166,17 +187,18 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   buttonText: {
-    color: '#FFFFFF',
+    color: Colors.textPrimary,
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: Fonts.bold,
   },
   linkText: {
     textAlign: 'center',
+    fontFamily: Fonts.regular,
     color: Colors.textSecondary,
     fontSize: 14,
   },
   link: {
-    color: Colors.primary,
-    fontWeight: '600',
+    color: Colors.teal,
+    fontFamily: Fonts.semiBold,
   },
 });

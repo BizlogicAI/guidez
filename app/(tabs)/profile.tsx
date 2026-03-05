@@ -8,10 +8,10 @@ import { Colors } from '../../constants/colors';
 import { Fonts } from '../../constants/fonts';
 
 function ProfileContent() {
-  const { user, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const insets = useSafeAreaInsets();
 
-  const displayName = user?.user_metadata?.username ?? user?.email ?? 'Member';
+  const displayName = profile?.username ?? user?.user_metadata?.username ?? user?.email ?? 'Member';
 
   const handleSignOut = () => {
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
@@ -42,6 +42,14 @@ function ProfileContent() {
       </View>
 
       <View style={styles.section}>
+        <TouchableOpacity style={styles.row} onPress={() => router.push('/profile/edit')}>
+          <Ionicons name="create-outline" size={20} color={Colors.textPrimary} />
+          <Text style={styles.rowText}>Edit Profile</Text>
+          <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} style={styles.chevron} />
+        </TouchableOpacity>
+
+        <View style={styles.divider} />
+
         <TouchableOpacity style={styles.row} onPress={handleSignOut}>
           <Ionicons name="log-out-outline" size={20} color={Colors.danger} />
           <Text style={[styles.rowText, { color: Colors.danger }]}>Sign Out</Text>
@@ -113,5 +121,14 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontFamily: Fonts.semiBold,
     color: Colors.textPrimary,
+    flex: 1,
+  },
+  chevron: {
+    marginLeft: 'auto',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    marginLeft: 48,
   },
 });

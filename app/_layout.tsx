@@ -32,6 +32,7 @@ export default function RootLayout() {
         <Stack.Screen name="directory/index" />
         <Stack.Screen name="auth/login" />
         <Stack.Screen name="auth/signup" />
+        <Stack.Screen name="profile/edit" />
       </Stack>
     </AuthProvider>
   );
