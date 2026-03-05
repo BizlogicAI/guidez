@@ -1,8 +1,9 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ProtectedScreen } from '../../components/ProtectedScreen';
 import { Colors } from '../../constants/colors';
 
-export default function CreateScreen() {
+function CreateContent() {
   const insets = useSafeAreaInsets();
   return (
     <View style={styles.container}>
@@ -15,6 +16,14 @@ export default function CreateScreen() {
         <Text style={styles.sub}>Post creation coming soon</Text>
       </View>
     </View>
+  );
+}
+
+export default function CreateScreen() {
+  return (
+    <ProtectedScreen message="Sign in to share your story with the Guidez community.">
+      <CreateContent />
+    </ProtectedScreen>
   );
 }
 

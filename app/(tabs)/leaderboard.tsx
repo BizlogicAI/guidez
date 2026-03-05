@@ -1,8 +1,9 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ProtectedScreen } from '../../components/ProtectedScreen';
 import { Colors } from '../../constants/colors';
 
-export default function LeaderboardScreen() {
+function LeaderboardContent() {
   const insets = useSafeAreaInsets();
   return (
     <View style={styles.container}>
@@ -15,6 +16,14 @@ export default function LeaderboardScreen() {
         <Text style={styles.sub}>Top contributors will appear here</Text>
       </View>
     </View>
+  );
+}
+
+export default function LeaderboardScreen() {
+  return (
+    <ProtectedScreen message="Sign in to see the community leaderboard and earn your place.">
+      <LeaderboardContent />
+    </ProtectedScreen>
   );
 }
 

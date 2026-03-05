@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   FlatList,
   ActivityIndicator,
   Linking,
+  TextInput,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
@@ -97,6 +98,10 @@ export default function DirectoryScreen() {
   const [locationError, setLocationError] = useState<string | null>(null);
   const [locationLabel, setLocationLabel] = useState('Your Location');
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [showLocationInput, setShowLocationInput] = useState(false);
+  const [locationInput, setLocationInput] = useState('');
+  const [geocodeError, setGeocodeError] = useState<string | null>(null);
+  const inputRef = useRef<TextInput>(null);
 
   const loadFacilities = useCallback(async (distance: number, cachedCoords?: { lat: number; lng: number }) => {
     setLoading(true);
@@ -146,6 +151,40 @@ export default function DirectoryScreen() {
     loadFacilities(distance, coords ?? undefined);
   };
 
+  const handleManualSearch = async () => {
+    const query = locationInput.trim();
+    if (!query) return;
+    setGeocodeError(null);
+    setLoading(true);
+    setFacilities([]);
+    try {
+      const results = await Location.geocodeAsync(query);
+      if (!results.length) {
+        setGeocodeError('Location not found. Try a city name or zip code.');
+        setLoading(false);
+        return;
+      }
+      const { latitude: lat, longitude: lng } = results[0];
+      const newCoords = { lat, lng };
+      setCoords(newCoords);
+      setLocationLabel(query);
+      setShowLocationInput(false);
+      setLocationInput('');
+      await loadFacilities(searchDistance, newCoords);
+    } catch {
+      setGeocodeError('Could not find that location. Please try again.');
+      setLoading(false);
+    }
+  };
+
+  const toggleLocationInput = () => {
+    setShowLocationInput((v) => {
+      if (!v) setTimeout(() => inputRef.current?.focus(), 50);
+      return !v;
+    });
+    setGeocodeError(null);
+  };
+
   const filtered = activeFilter === 'All'
     ? facilities
     : facilities.filter((f) => f.type === activeFilter);
@@ -162,10 +201,42 @@ export default function DirectoryScreen() {
               <Text style={styles.locationText}>{locationLabel}</Text>
             </View>
           </View>
-          <TouchableOpacity style={styles.searchIcon} onPress={() => loadFacilities(searchDistance)}>
-            <Ionicons name="refresh-outline" size={24} color={Colors.textPrimary} />
-          </TouchableOpacity>
+          <View style={styles.headerActions}>
+            <TouchableOpacity style={styles.searchIcon} onPress={toggleLocationInput}>
+              <Ionicons
+                name={showLocationInput ? 'close-outline' : 'search-outline'}
+                size={24}
+                color={showLocationInput ? Colors.teal : Colors.textPrimary}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.searchIcon} onPress={() => loadFacilities(searchDistance)}>
+              <Ionicons name="refresh-outline" size={24} color={Colors.textPrimary} />
+            </TouchableOpacity>
+          </View>
         </View>
+
+        {showLocationInput && (
+          <View style={styles.locationInputRow}>
+            <TextInput
+              ref={inputRef}
+              style={styles.locationInput}
+              placeholder="City, state or zip code..."
+              placeholderTextColor={Colors.textSecondary}
+              value={locationInput}
+              onChangeText={setLocationInput}
+              onSubmitEditing={handleManualSearch}
+              returnKeyType="search"
+              autoCapitalize="words"
+              autoCorrect={false}
+            />
+            <TouchableOpacity style={styles.goButton} onPress={handleManualSearch}>
+              <Text style={styles.goButtonText}>Go</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+        {geocodeError ? (
+          <Text style={styles.geocodeError}>{geocodeError}</Text>
+        ) : null}
 
         {/* Distance selector */}
         <View style={styles.distanceRow}>
@@ -454,5 +525,43 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontFamily: Fonts.bold,
     color: Colors.bgDark,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  locationInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+    gap: 8,
+  },
+  locationInput: {
+    flex: 1,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    fontSize: 14,
+    color: Colors.textPrimary,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  goButton: {
+    backgroundColor: Colors.teal,
+    borderRadius: 10,
+    paddingHorizontal: 18,
+    paddingVertical: 9,
+  },
+  goButtonText: {
+    fontSize: 14,
+    fontFamily: Fonts.bold,
+    color: Colors.bgDark,
+  },
+  geocodeError: {
+    fontSize: 12,
+    color: '#FF6B6B',
+    marginTop: 6,
   },
 });

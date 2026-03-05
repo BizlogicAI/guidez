@@ -1,8 +1,9 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ProtectedScreen } from '../../components/ProtectedScreen';
 import { Colors } from '../../constants/colors';
 
-export default function MessagesScreen() {
+function MessagesContent() {
   const insets = useSafeAreaInsets();
   return (
     <View style={styles.container}>
@@ -15,6 +16,14 @@ export default function MessagesScreen() {
         <Text style={styles.sub}>Connect with others in the community</Text>
       </View>
     </View>
+  );
+}
+
+export default function MessagesScreen() {
+  return (
+    <ProtectedScreen message="Sign in to message other members of the community.">
+      <MessagesContent />
+    </ProtectedScreen>
   );
 }
 

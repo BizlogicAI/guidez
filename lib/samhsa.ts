@@ -86,8 +86,8 @@ export async function fetchFacilities(
 
   const data: SAMHSAResponse = await res.json();
 
-  return data.rows.map((row, i) => ({
-    id: `${i}-${row.name1}-${row.street1}-${row.city}`.replace(/\s+/g, '-').toLowerCase(),
+  const mapped = data.rows.map((row) => ({
+    id: `${row.name1}-${row.street1}-${row.city}`.replace(/\s+/g, '-').toLowerCase(),
     name: row.name1,
     address: row.street1,
     city: row.city,
@@ -100,4 +100,13 @@ export async function fetchFacilities(
     longitude: row.longitude,
     type: mapType(row),
   }));
+
+  // Deduplicate by name + address — same facility can appear under multiple service categories
+  const seen = new Set<string>();
+  return mapped.filter((f) => {
+    const key = `${f.name}|${f.address}|${f.city}`.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
