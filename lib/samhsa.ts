@@ -57,7 +57,7 @@ export async function fetchFacilities(
   // sAddr format is lat,lng — comma must not be URL-encoded, build manually
   const url =
     `${BASE_URL}?sAddr=${latitude},${longitude}` +
-    `&limitType=0&limitValue=${distance}&pageSize=${pageSize}&page=1`;
+    `&sType=SA,MH&distance=${distance}&pageSize=${pageSize}&page=1`;
 
   const res = await fetch(url);
 
