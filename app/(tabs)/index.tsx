@@ -30,7 +30,7 @@ const ILLUSTRATIONS = [
   { emoji: '☀️', label: 'New Beginnings' },
   { emoji: '🌸', label: 'Blooming' },
   { emoji: '💙', label: 'You Are Loved' },
-  { emoji: '🌈', label: 'Hope' },
+  { emoji: '🕊️', label: 'Hope' },
 ];
 
 const MESSAGES = [
@@ -41,7 +41,7 @@ const MESSAGES = [
   '🦋 Healing is not linear — be patient with yourself.',
   '☀️ Today is a new opportunity to grow and begin again.',
   '🌊 It\'s okay to rest. You don\'t have to earn your peace.',
-  '🌈 The strength you need is already inside you.',
+  '🕊️ The strength you need is already inside you.',
 ];
 
 function AnimatedIllustration() {

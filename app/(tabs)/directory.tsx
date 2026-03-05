@@ -19,7 +19,7 @@ import { fetchFacilities, Facility, FacilityType } from '../../lib/samhsa';
 
 type FilterType = 'All' | FacilityType;
 
-const FILTERS: FilterType[] = ['All', 'Mental Health', 'Rehab', 'Hospitals', 'Detox', 'Sober Living'];
+const FILTERS: FilterType[] = ['All', 'Hospitals', 'Detox', 'Rehab', 'Mental Health', 'Sober Living'];
 const DISTANCES = [10, 25, 50, 100];
 
 function FacilityCard({ item }: { item: Facility }) {
