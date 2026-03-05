@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Animated,
 } from 'react-native';
 import { router } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../lib/context/AuthContext';
 import {
@@ -19,6 +20,13 @@ import {
   requestNotificationPermissions,
   scheduleLocalNotification,
 } from '../../lib/localNotifications';
+import {
+  fetchTodayCheckin,
+  submitCheckin,
+  MOODS,
+  type Mood,
+  type MoodOption,
+} from '../../lib/checkins';
 import { Colors } from '../../constants/colors';
 import { Fonts } from '../../constants/fonts';
 
@@ -110,6 +118,73 @@ function CyclingMessage() {
   );
 }
 
+function DailyCheckinCard({ userId }: { userId: string }) {
+  const [checkedInMood, setCheckedInMood] = useState<Mood | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchTodayCheckin(userId).then((c) => {
+        setCheckedInMood(c?.mood ?? null);
+        setLoading(false);
+        Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }).start();
+      });
+    }, [userId])
+  );
+
+  const handleMood = async (mood: Mood) => {
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      await submitCheckin(userId, mood);
+      setCheckedInMood(mood);
+    } catch {
+      // silently fail — user can try again
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) return null;
+
+  const selectedOption = MOODS.find((m) => m.value === checkedInMood);
+
+  return (
+    <Animated.View style={[styles.checkinCard, { opacity: fadeAnim }]}>
+      {checkedInMood ? (
+        <View style={styles.checkinDone}>
+          <Text style={styles.checkinDoneEmoji}>{selectedOption?.emoji}</Text>
+          <View>
+            <Text style={styles.checkinDoneTitle}>Checked in today</Text>
+            <Text style={styles.checkinDoneSub}>Feeling {selectedOption?.label.toLowerCase()} · See you tomorrow</Text>
+          </View>
+          <Ionicons name="checkmark-circle" size={22} color={Colors.teal} />
+        </View>
+      ) : (
+        <>
+          <Text style={styles.checkinTitle}>How are you feeling today?</Text>
+          <View style={styles.moodRow}>
+            {MOODS.map((m: MoodOption) => (
+              <TouchableOpacity
+                key={m.value}
+                style={styles.moodButton}
+                onPress={() => handleMood(m.value)}
+                activeOpacity={0.7}
+                disabled={submitting}
+              >
+                <Text style={styles.moodEmoji}>{m.emoji}</Text>
+                <Text style={styles.moodLabel}>{m.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </>
+      )}
+    </Animated.View>
+  );
+}
+
 export default function HomeScreen() {
   const { user } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
@@ -169,6 +244,8 @@ export default function HomeScreen() {
           />
         </View>
 
+        {user && <DailyCheckinCard userId={user.id} />}
+
         <AnimatedIllustration />
         <CyclingMessage />
       </SafeAreaView>
@@ -202,19 +279,56 @@ const styles = StyleSheet.create({
   },
   badgeText: { fontSize: 9, fontFamily: Fonts.bold, color: Colors.bgDark },
   logoContainer: { alignItems: 'center', marginTop: 4, marginBottom: 8 },
-  logo: { width: 160, height: 160, borderRadius: 28, overflow: 'hidden' },
+  logo: { width: 140, height: 140, borderRadius: 28, overflow: 'hidden' },
+
+  // Check-in card
+  checkinCard: {
+    marginHorizontal: 20,
+    backgroundColor: Colors.bgCard,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 8,
+  },
+  checkinTitle: {
+    fontSize: 14,
+    fontFamily: Fonts.semiBold,
+    color: Colors.textSecondary,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  moodRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  moodButton: {
+    alignItems: 'center',
+    gap: 4,
+    flex: 1,
+  },
+  moodEmoji: { fontSize: 28 },
+  moodLabel: { fontSize: 10, fontFamily: Fonts.medium, color: Colors.textMuted },
+  checkinDone: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  checkinDoneEmoji: { fontSize: 32 },
+  checkinDoneTitle: { fontSize: 14, fontFamily: Fonts.bold, color: Colors.textPrimary },
+  checkinDoneSub: { fontSize: 12, fontFamily: Fonts.regular, color: Colors.textMuted, marginTop: 2 },
+
+  // Illustration
   illustrationContainer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   illustrationCircle: {
-    width: 180,
-    height: 180,
-    borderRadius: 90,
+    width: 150,
+    height: 150,
+    borderRadius: 75,
     backgroundColor: 'rgba(62, 207, 192, 0.15)',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
     borderColor: 'rgba(62, 207, 192, 0.3)',
   },
-  illustrationEmoji: { fontSize: 80 },
+  illustrationEmoji: { fontSize: 68 },
   illustrationLabel: {
     textAlign: 'center',
     marginTop: 14,
