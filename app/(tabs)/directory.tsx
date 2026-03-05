@@ -146,6 +146,7 @@ export default function DirectoryScreen() {
       </ScrollView>
 
       {/* Content */}
+      <View style={styles.contentArea}>
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={Colors.teal} />
@@ -178,6 +179,7 @@ export default function DirectoryScreen() {
           }
         />
       )}
+      </View>
     </View>
   );
 }
@@ -217,13 +219,14 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   filterScroll: {
-    maxHeight: 56,
+    height: 56,
+    flexShrink: 0,
     marginVertical: 12,
   },
   filterContent: {
     paddingHorizontal: 16,
     gap: 8,
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   chip: {
     paddingHorizontal: 18,
@@ -242,6 +245,9 @@ const styles = StyleSheet.create({
   },
   chipTextActive: {
     color: Colors.chipTextActive,
+  },
+  contentArea: {
+    flex: 1,
   },
   loadingContainer: {
     flex: 1,
