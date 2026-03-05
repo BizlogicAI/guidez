@@ -19,16 +19,25 @@ import { fetchFacilities, Facility, FacilityType } from '../../lib/samhsa';
 type FilterType = 'All' | FacilityType;
 
 const FILTERS: FilterType[] = ['All', 'Mental Health', 'Rehab', 'Hospitals', 'Detox', 'Sober Living'];
+const DISTANCES = [10, 25, 50, 100];
 
 function FacilityCard({ item }: { item: Facility }) {
   const handleCall = () => {
-    if (item.phone) {
-      Linking.openURL(`tel:${item.phone.replace(/\D/g, '')}`);
-    }
+    if (item.phone) Linking.openURL(`tel:${item.phone.replace(/\D/g, '')}`);
+  };
+
+  const handleWebsite = () => {
+    const url = item.website.startsWith('http') ? item.website : `https://${item.website}`;
+    Linking.openURL(url);
+  };
+
+  const handleReviews = () => {
+    const query = encodeURIComponent(`${item.name} ${item.city} ${item.state}`);
+    Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${query}`);
   };
 
   return (
-    <TouchableOpacity style={styles.card} activeOpacity={0.8} onPress={handleCall}>
+    <View style={styles.card}>
       <View style={styles.cardLeft}>
         <Ionicons name="location-outline" size={22} color={Colors.textPrimary} />
         <Text style={styles.distanceText}>{item.distance} mi.</Text>
@@ -38,17 +47,31 @@ function FacilityCard({ item }: { item: Facility }) {
         <Text style={styles.cardAddress} numberOfLines={1}>
           {item.address}, {item.city}, {item.state}
         </Text>
-        {item.phone ? (
-          <View style={styles.phoneRow}>
-            <Ionicons name="call-outline" size={12} color={Colors.teal} />
-            <Text style={styles.phoneText}>{item.phone}</Text>
-          </View>
-        ) : null}
+
         <View style={styles.typeBadge}>
           <Text style={styles.typeBadgeText}>{item.type}</Text>
         </View>
+
+        <View style={styles.cardActions}>
+          {item.phone ? (
+            <TouchableOpacity style={styles.actionButton} onPress={handleCall}>
+              <Ionicons name="call-outline" size={13} color={Colors.teal} />
+              <Text style={styles.actionText}>Call</Text>
+            </TouchableOpacity>
+          ) : null}
+          {item.website ? (
+            <TouchableOpacity style={styles.actionButton} onPress={handleWebsite}>
+              <Ionicons name="globe-outline" size={13} color={Colors.teal} />
+              <Text style={styles.actionText}>Website</Text>
+            </TouchableOpacity>
+          ) : null}
+          <TouchableOpacity style={styles.actionButton} onPress={handleReviews}>
+            <Ionicons name="star-outline" size={13} color={Colors.teal} />
+            <Text style={styles.actionText}>Reviews</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-    </TouchableOpacity>
+    </View>
   );
 }
 
@@ -64,35 +87,43 @@ function EmptyState({ message }: { message: string }) {
 export default function DirectoryScreen() {
   const insets = useSafeAreaInsets();
   const [activeFilter, setActiveFilter] = useState<FilterType>('All');
+  const [searchDistance, setSearchDistance] = useState(25);
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [loading, setLoading] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [locationLabel, setLocationLabel] = useState('Your Location');
-  const [debugCoords, setDebugCoords] = useState<string | null>(null);
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
 
-  const loadFacilities = useCallback(async () => {
+  const loadFacilities = useCallback(async (distance: number, cachedCoords?: { lat: number; lng: number }) => {
     setLoading(true);
     setLocationError(null);
 
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') {
-      setLocationError('Location permission denied. Please enable it in settings to find nearby resources.');
-      setLoading(false);
-      return;
-    }
-
     try {
-      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
-      const { latitude, longitude } = loc.coords;
+      let lat: number;
+      let lng: number;
 
-      setDebugCoords(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+      if (cachedCoords) {
+        lat = cachedCoords.lat;
+        lng = cachedCoords.lng;
+      } else {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          setLocationError('Location permission denied. Please enable it in settings to find nearby resources.');
+          setLoading(false);
+          return;
+        }
+        const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+        lat = loc.coords.latitude;
+        lng = loc.coords.longitude;
+        setCoords({ lat, lng });
 
-      const [place] = await Location.reverseGeocodeAsync({ latitude, longitude });
-      if (place) {
-        setLocationLabel(`${place.city ?? place.region ?? 'Your Area'}, ${place.region ?? ''}`);
+        const [place] = await Location.reverseGeocodeAsync({ latitude: lat, longitude: lng });
+        if (place) {
+          setLocationLabel(`${place.city ?? place.region ?? 'Your Area'}, ${place.region ?? ''}`);
+        }
       }
 
-      const results = await fetchFacilities(latitude, longitude);
+      const results = await fetchFacilities(lat, lng, distance);
       setFacilities(results);
     } catch {
       setLocationError('Could not load facilities. Check your internet connection and try again.');
@@ -101,8 +132,15 @@ export default function DirectoryScreen() {
   }, []);
 
   useEffect(() => {
-    loadFacilities();
-  }, [loadFacilities]);
+    loadFacilities(searchDistance);
+  }, [loadFacilities, searchDistance]);
+
+  const handleDistanceChange = (distance: number) => {
+    setSearchDistance(distance);
+    setFacilities([]);
+    // Re-use cached coords if available
+    loadFacilities(distance, coords ?? undefined);
+  };
 
   const filtered = activeFilter === 'All'
     ? facilities
@@ -119,36 +157,49 @@ export default function DirectoryScreen() {
               <Ionicons name="location-outline" size={14} color={Colors.textSecondary} />
               <Text style={styles.locationText}>{locationLabel}</Text>
             </View>
-            {debugCoords && (
-              <Text style={styles.debugText}>GPS: {debugCoords}</Text>
-            )}
           </View>
-          <TouchableOpacity style={styles.searchIcon} onPress={loadFacilities}>
+          <TouchableOpacity style={styles.searchIcon} onPress={() => loadFacilities(searchDistance)}>
             <Ionicons name="refresh-outline" size={24} color={Colors.textPrimary} />
           </TouchableOpacity>
+        </View>
+
+        {/* Distance selector */}
+        <View style={styles.distanceRow}>
+          {DISTANCES.map((d) => (
+            <TouchableOpacity
+              key={d}
+              style={[styles.distanceChip, searchDistance === d && styles.distanceChipActive]}
+              onPress={() => handleDistanceChange(d)}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.distanceChipText, searchDistance === d && styles.distanceChipTextActive]}>
+                {d} mi
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
       </View>
 
       {/* Filter chips */}
       <View style={styles.filterRow}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.filterContent}
-      >
-        {FILTERS.map((filter) => (
-          <TouchableOpacity
-            key={filter}
-            style={[styles.chip, activeFilter === filter && styles.chipActive]}
-            onPress={() => setActiveFilter(filter)}
-            activeOpacity={0.8}
-          >
-            <Text style={[styles.chipText, activeFilter === filter && styles.chipTextActive]}>
-              {filter}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filterContent}
+        >
+          {FILTERS.map((filter) => (
+            <TouchableOpacity
+              key={filter}
+              style={[styles.chip, activeFilter === filter && styles.chipActive]}
+              onPress={() => setActiveFilter(filter)}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.chipText, activeFilter === filter && styles.chipTextActive]}>
+                {filter}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
       </View>
 
       {/* Content */}
@@ -156,13 +207,13 @@ export default function DirectoryScreen() {
         {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={Colors.teal} />
-            <Text style={styles.loadingText}>Finding resources near you...</Text>
+            <Text style={styles.loadingText}>Finding resources within {searchDistance} miles...</Text>
           </View>
         ) : locationError ? (
           <View style={styles.errorState}>
             <Text style={styles.emptyEmoji}>📍</Text>
             <Text style={styles.emptyText}>{locationError}</Text>
-            <TouchableOpacity style={styles.retryButton} onPress={loadFacilities}>
+            <TouchableOpacity style={styles.retryButton} onPress={() => loadFacilities(searchDistance)}>
               <Text style={styles.retryButtonText}>Try Again</Text>
             </TouchableOpacity>
           </View>
@@ -171,7 +222,7 @@ export default function DirectoryScreen() {
             {facilities.length > 0 && (
               <Text style={styles.resultCount}>
                 {filtered.length} resource{filtered.length !== 1 ? 's' : ''}
-                {activeFilter === 'All' ? ' near you' : ` in ${activeFilter}`}
+                {activeFilter === 'All' ? ` within ${searchDistance} mi` : ` in ${activeFilter}`}
               </Text>
             )}
             <FlatList
@@ -181,7 +232,7 @@ export default function DirectoryScreen() {
               contentContainerStyle={styles.listContent}
               showsVerticalScrollIndicator={false}
               ListEmptyComponent={
-                <EmptyState message="No facilities found in this category. Try a different filter." />
+                <EmptyState message="No facilities found in this category. Try a different filter or increase the distance." />
               }
             />
           </>
@@ -199,17 +250,12 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: Colors.bgDark,
     paddingHorizontal: 20,
-    paddingBottom: 16,
+    paddingBottom: 12,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  debugText: {
-    fontSize: 10,
-    color: 'rgba(255,255,255,0.5)',
-    marginTop: 2,
   },
   headerTitle: {
     fontSize: 20,
@@ -228,6 +274,31 @@ const styles = StyleSheet.create({
   },
   searchIcon: {
     padding: 4,
+  },
+  distanceRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 12,
+  },
+  distanceChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  distanceChipActive: {
+    backgroundColor: Colors.teal,
+    borderColor: Colors.teal,
+  },
+  distanceChipText: {
+    fontSize: 12,
+    fontFamily: Fonts.semiBold,
+    color: Colors.textSecondary,
+  },
+  distanceChipTextActive: {
+    color: Colors.bgDark,
   },
   filterRow: {
     height: 52,
@@ -317,16 +388,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.textSecondary,
   },
-  phoneRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  phoneText: {
-    fontSize: 12,
-    color: Colors.teal,
-    fontFamily: Fonts.medium,
-  },
   typeBadge: {
     alignSelf: 'flex-start',
     backgroundColor: 'rgba(62,207,192,0.15)',
@@ -337,6 +398,21 @@ const styles = StyleSheet.create({
   },
   typeBadgeText: {
     fontSize: 11,
+    fontFamily: Fonts.semiBold,
+    color: Colors.teal,
+  },
+  cardActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 6,
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  actionText: {
+    fontSize: 12,
     fontFamily: Fonts.semiBold,
     color: Colors.teal,
   },

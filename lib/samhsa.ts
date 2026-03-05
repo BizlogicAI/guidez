@@ -10,6 +10,7 @@ export interface Facility {
   state: string;
   zip: string;
   phone: string;
+  website: string;
   distance: number;
   latitude: number;
   longitude: number;
@@ -29,6 +30,7 @@ interface SAMHSARow {
   state: string;
   zip: string;
   phone: string;
+  website?: string;
   latitude: number;
   longitude: number;
   miles: number;
@@ -92,6 +94,7 @@ export async function fetchFacilities(
     state: row.state,
     zip: row.zip,
     phone: row.phone ?? '',
+    website: row.website ?? '',
     distance: Math.round(row.miles * 10) / 10,
     latitude: row.latitude,
     longitude: row.longitude,
