@@ -123,6 +123,9 @@ export default function CommentsScreen() {
           onChangeText={setText}
           maxLength={300}
           multiline
+          autoCorrect
+          autoCapitalize="sentences"
+          spellCheck
           returnKeyType="send"
           onSubmitEditing={handleSubmit}
         />

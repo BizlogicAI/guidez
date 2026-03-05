@@ -83,6 +83,9 @@ export function CreatePostModal({ visible, userId, username, onClose, onPosted }
               onChangeText={setContent}
               multiline
               autoFocus
+              autoCorrect
+              autoCapitalize="sentences"
+              spellCheck
               maxLength={500}
             />
           </View>

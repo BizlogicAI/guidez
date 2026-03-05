@@ -151,6 +151,9 @@ export default function ChatScreen() {
           onChangeText={setText}
           maxLength={500}
           multiline
+          autoCorrect
+          autoCapitalize="sentences"
+          spellCheck
           returnKeyType="send"
           onSubmitEditing={handleSend}
         />
