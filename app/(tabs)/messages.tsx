@@ -1,14 +1,14 @@
-import { View, Text, StyleSheet, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '../../constants/colors';
 
 export default function MessagesScreen() {
+  const insets = useSafeAreaInsets();
   return (
     <View style={styles.container}>
-      <SafeAreaView>
-        <View style={styles.header}>
-          <Text style={styles.title}>Messages</Text>
-        </View>
-      </SafeAreaView>
+      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
+        <Text style={styles.title}>Messages</Text>
+      </View>
       <View style={styles.body}>
         <Text style={styles.emoji}>💬</Text>
         <Text style={styles.label}>Your messages will appear here</Text>
@@ -20,7 +20,7 @@ export default function MessagesScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bgPrimary },
-  header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12 },
+  header: { paddingHorizontal: 20, paddingBottom: 12 },
   title: { fontSize: 22, fontWeight: '700', color: Colors.textPrimary },
   body: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10 },
   emoji: { fontSize: 56 },

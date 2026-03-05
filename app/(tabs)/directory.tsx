@@ -130,10 +130,10 @@ export default function DirectoryScreen() {
       </View>
 
       {/* Filter chips */}
+      <View style={styles.filterRow}>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        style={styles.filterScroll}
         contentContainerStyle={styles.filterContent}
       >
         {FILTERS.map((filter) => (
@@ -149,6 +149,7 @@ export default function DirectoryScreen() {
           </TouchableOpacity>
         ))}
       </ScrollView>
+      </View>
 
       {/* Content */}
       <View style={styles.contentArea}>
@@ -228,16 +229,15 @@ const styles = StyleSheet.create({
   searchIcon: {
     padding: 4,
   },
-  filterScroll: {
+  filterRow: {
     height: 52,
-    flexShrink: 0,
     marginTop: 10,
     marginBottom: 4,
   },
   filterContent: {
     paddingHorizontal: 16,
     gap: 8,
-    alignItems: 'flex-start',
+    alignItems: 'center',
   },
   chip: {
     paddingHorizontal: 18,
