@@ -16,6 +16,12 @@ export interface Facility {
   type: FacilityType;
 }
 
+interface ServiceItem {
+  f1: string;
+  f2: string;
+  f3: string;
+}
+
 interface SAMHSARow {
   name1: string;
   street1: string;
@@ -27,7 +33,7 @@ interface SAMHSARow {
   longitude: number;
   miles: number;
   typeFacility?: string;
-  services?: string[];
+  services?: ServiceItem[];
 }
 
 interface SAMHSAResponse {
@@ -38,13 +44,24 @@ interface SAMHSAResponse {
 }
 
 function mapType(row: SAMHSARow): FacilityType {
-  const services = row.services ?? [];
-  const type = (row.typeFacility ?? '').toLowerCase();
+  const code = row.typeFacility ?? '';
 
-  if (type.includes('hospital') || type.includes('inpatient')) return 'Hospitals';
-  if (type.includes('detox') || services.includes('DT')) return 'Detox';
-  if (type.includes('sober') || type.includes('halfway') || type.includes('residential')) return 'Sober Living';
-  if (services.includes('MH') && !services.includes('SA')) return 'Mental Health';
+  // Map typeFacility codes directly
+  if (code === 'MH') return 'Mental Health';
+  if (code === 'DT') return 'Detox';
+  if (code === 'HO') return 'Hospitals';
+
+  // Use service descriptions as fallback for SA/BUPREN/HRSA facilities
+  const desc = (row.services ?? [])
+    .map((s) => s.f3 ?? '')
+    .join(' ')
+    .toLowerCase();
+
+  if (desc.includes('detox')) return 'Detox';
+  if (desc.includes('hospital') || desc.includes('inpatient medical')) return 'Hospitals';
+  if (desc.includes('sober living') || desc.includes('halfway house')) return 'Sober Living';
+  if (desc.includes('residential') && (code === 'SA' || code === 'HRSA')) return 'Sober Living';
+
   return 'Rehab';
 }
 
