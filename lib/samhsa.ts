@@ -1,4 +1,4 @@
-const BASE_URL = 'https://findtreatment.gov/locator/listing';
+const BASE_URL = 'https://findtreatment.gov/locator/exportsAsJson/v2';
 
 export type FacilityType = 'Mental Health' | 'Rehab' | 'Hospitals' | 'Detox' | 'Sober Living';
 
@@ -31,7 +31,9 @@ interface SAMHSARow {
 }
 
 interface SAMHSAResponse {
-  totalCount: number;
+  recordCount: number;
+  totalPages: number;
+  page: number;
   rows: SAMHSARow[];
 }
 
@@ -53,12 +55,11 @@ export async function fetchFacilities(
   pageSize = 30
 ): Promise<Facility[]> {
   const params = new URLSearchParams({
-    sType: 'SA,MH',
+    sAddr: `${longitude},${latitude}`,
+    limitType: '0',
+    limitValue: String(distance),
     pageSize: String(pageSize),
-    page: '0',
-    distance: String(distance),
-    latitude: String(latitude),
-    longitude: String(longitude),
+    page: '1',
   });
 
   const res = await fetch(`${BASE_URL}?${params.toString()}`);

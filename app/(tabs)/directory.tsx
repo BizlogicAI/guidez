@@ -20,15 +20,6 @@ type FilterType = 'All' | FacilityType;
 
 const FILTERS: FilterType[] = ['All', 'Mental Health', 'Rehab', 'Hospitals', 'Detox', 'Sober Living'];
 
-function StarRating({ rating }: { rating: number }) {
-  return (
-    <View style={styles.ratingRow}>
-      <Ionicons name="star" size={12} color={Colors.star} />
-      <Text style={styles.ratingText}>{rating.toFixed(1)}</Text>
-    </View>
-  );
-}
-
 function FacilityCard({ item }: { item: Facility }) {
   const handleCall = () => {
     if (item.phone) {
@@ -96,8 +87,12 @@ export default function DirectoryScreen() {
       setLocationLabel(`${place.city ?? place.region ?? 'Your Area'}, ${place.region ?? ''}`);
     }
 
-    const results = await fetchFacilities(latitude, longitude);
-    setFacilities(results);
+    try {
+      const results = await fetchFacilities(latitude, longitude);
+      setFacilities(results);
+    } catch {
+      setLocationError('Could not load facilities. Check your internet connection and try again.');
+    }
     setLoading(false);
   }, []);
 
@@ -356,14 +351,5 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontFamily: Fonts.bold,
     color: Colors.bgDark,
-  },
-  ratingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  ratingText: {
-    fontSize: 12,
-    color: Colors.textSecondary,
   },
 });
