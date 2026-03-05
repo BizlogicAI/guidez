@@ -35,6 +35,7 @@ export default function RootLayout() {
         <Stack.Screen name="profile/edit" />
         <Stack.Screen name="feed/[postId]/comments" />
         <Stack.Screen name="messages/[userId]/index" />
+        <Stack.Screen name="notifications" />
       </Stack>
     </AuthProvider>
   );

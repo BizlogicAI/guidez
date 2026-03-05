@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { PostAvatar } from './PostAvatar';
 import { toggleLike } from '../lib/likes';
+import { createNotification } from '../lib/userNotifications';
 import type { FeedPost } from '../lib/feed';
 import { Colors } from '../constants/colors';
 import { Fonts } from '../constants/fonts';
@@ -11,6 +12,7 @@ import { Fonts } from '../constants/fonts';
 interface PostCardProps {
   post: FeedPost;
   currentUserId: string;
+  currentUsername: string;
   onLikeChange: (postId: string, liked: boolean) => void;
 }
 
@@ -25,14 +27,13 @@ function timeAgo(dateStr: string): string {
   return `${days}d ago`;
 }
 
-export function PostCard({ post, currentUserId, onLikeChange }: PostCardProps) {
+export function PostCard({ post, currentUserId, currentUsername, onLikeChange }: PostCardProps) {
   const [liked, setLiked] = useState(post.is_liked);
   const [likeCount, setLikeCount] = useState(post.like_count);
   const [liking, setLiking] = useState(false);
 
   const handleLike = async () => {
     if (liking) return;
-    // Optimistic update
     const newLiked = !liked;
     setLiked(newLiked);
     setLikeCount((c) => c + (newLiked ? 1 : -1));
@@ -40,8 +41,16 @@ export function PostCard({ post, currentUserId, onLikeChange }: PostCardProps) {
     try {
       await toggleLike(post.id, currentUserId, liked);
       onLikeChange(post.id, newLiked);
+      if (newLiked) {
+        createNotification({
+          userId: post.user_id,
+          type: 'like',
+          actorId: currentUserId,
+          actorUsername: currentUsername,
+          postId: post.id,
+        }).catch(() => {});
+      }
     } catch {
-      // Revert on failure
       setLiked(liked);
       setLikeCount((c) => c + (newLiked ? -1 : 1));
     } finally {
@@ -81,7 +90,7 @@ export function PostCard({ post, currentUserId, onLikeChange }: PostCardProps) {
 
         <TouchableOpacity
           style={styles.actionBtn}
-          onPress={() => router.push(`/feed/${post.id}/comments`)}
+          onPress={() => router.push(`/feed/${post.id}/comments?ownerId=${post.user_id}`)}
           activeOpacity={0.7}
         >
           <Ionicons name="chatbubble-outline" size={19} color={Colors.textSecondary} />

@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../../lib/context/AuthContext';
 import { fetchComments, createComment, subscribeToComments, type Comment } from '../../../lib/comments';
+import { createNotification } from '../../../lib/userNotifications';
 import { PostAvatar } from '../../../components/PostAvatar';
 import { Colors } from '../../../constants/colors';
 import { Fonts } from '../../../constants/fonts';
@@ -30,7 +31,7 @@ function timeAgo(dateStr: string): string {
 }
 
 export default function CommentsScreen() {
-  const { postId } = useLocalSearchParams<{ postId: string }>();
+  const { postId, ownerId } = useLocalSearchParams<{ postId: string; ownerId: string }>();
   const { user, profile } = useAuth();
   const insets = useSafeAreaInsets();
   const [comments, setComments] = useState<Comment[]>([]);
@@ -63,6 +64,15 @@ export default function CommentsScreen() {
       await createComment(postId, user.id, text.trim());
       setText('');
       setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
+      if (ownerId) {
+        createNotification({
+          userId: ownerId,
+          type: 'comment',
+          actorId: user.id,
+          actorUsername: username,
+          postId,
+        }).catch(() => {});
+      }
     } catch {
       // silent — comment failed
     } finally {

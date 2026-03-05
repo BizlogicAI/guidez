@@ -21,6 +21,7 @@ import {
   subscribeToMessages,
   type Message,
 } from '../../../lib/messages';
+import { createNotification } from '../../../lib/userNotifications';
 import { supabase } from '../../../lib/supabase';
 import { Colors } from '../../../constants/colors';
 import { Fonts } from '../../../constants/fonts';
@@ -31,7 +32,7 @@ function formatTime(dateStr: string): string {
 
 export default function ChatScreen() {
   const { userId: otherUserId } = useLocalSearchParams<{ userId: string }>();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const insets = useSafeAreaInsets();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
@@ -90,6 +91,13 @@ export default function ChatScreen() {
     setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 50);
     try {
       await sendMessage(user.id, otherUserId, content);
+      const senderUsername = profile?.username ?? user.user_metadata?.username ?? 'member';
+      createNotification({
+        userId: otherUserId,
+        type: 'message',
+        actorId: user.id,
+        actorUsername: senderUsername,
+      }).catch(() => {});
     } catch {
       // revert optimistic on failure
       setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));

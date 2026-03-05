@@ -86,6 +86,7 @@ function FeedContent() {
             <PostCard
               post={item}
               currentUserId={user!.id}
+              currentUsername={username}
               onLikeChange={handleLikeChange}
             />
           )}
