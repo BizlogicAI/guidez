@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,66 +7,18 @@ import {
   TouchableOpacity,
   SafeAreaView,
   FlatList,
+  ActivityIndicator,
+  Linking,
 } from 'react-native';
+import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
 import { Colors } from '../../constants/colors';
 import { Fonts } from '../../constants/fonts';
+import { fetchFacilities, Facility, FacilityType } from '../../lib/samhsa';
 
-type FilterType = 'All' | 'Mental Health' | 'Rehab' | 'Hospitals' | 'Detox' | 'Sober Living';
+type FilterType = 'All' | FacilityType;
 
 const FILTERS: FilterType[] = ['All', 'Mental Health', 'Rehab', 'Hospitals', 'Detox', 'Sober Living'];
-
-const MOCK_FACILITIES = [
-  {
-    id: '1',
-    name: 'Cira Center For Behavioral Health',
-    address: '155 N Michigan Ave #450, Chicago',
-    distance: 0.6,
-    rating: 4.1,
-    type: 'Mental Health',
-  },
-  {
-    id: '2',
-    name: 'Pathlight Mood & Anxiety Center Chicago',
-    address: '333 Michigan Ave Suite 1900, Chicago',
-    distance: 0.7,
-    rating: 2.8,
-    type: 'Mental Health',
-  },
-  {
-    id: '3',
-    name: 'Pathlight Mood & Anxiety Center Chicago',
-    address: '1 E Erie St Suite 400, Chicago',
-    distance: 1.1,
-    rating: 3.2,
-    type: 'Mental Health',
-  },
-  {
-    id: '4',
-    name: 'SunCloud Health Outpatient Treatment',
-    address: '1840 N Clybourn Ave #520, Chicago',
-    distance: 2.8,
-    rating: 3.9,
-    type: 'Rehab',
-  },
-  {
-    id: '5',
-    name: 'Mount Sinai Inpatient Psychiatry',
-    address: '1500 S Fairfield Ave, Chicago',
-    distance: 3.5,
-    rating: 2.3,
-    type: 'Hospitals',
-  },
-  {
-    id: '6',
-    name: 'Compass Health Center',
-    address: '2500 W Bradley Pl #100, Chicago',
-    distance: 5.9,
-    rating: 4.2,
-    type: 'Mental Health',
-  },
-];
 
 function StarRating({ rating }: { rating: number }) {
   return (
@@ -77,28 +29,85 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
-function FacilityCard({ item }: { item: typeof MOCK_FACILITIES[0] }) {
+function FacilityCard({ item }: { item: Facility }) {
+  const handleCall = () => {
+    if (item.phone) {
+      Linking.openURL(`tel:${item.phone.replace(/\D/g, '')}`);
+    }
+  };
+
   return (
-    <TouchableOpacity style={styles.card} activeOpacity={0.8}>
+    <TouchableOpacity style={styles.card} activeOpacity={0.8} onPress={handleCall}>
       <View style={styles.cardLeft}>
         <Ionicons name="location-outline" size={22} color={Colors.textPrimary} />
         <Text style={styles.distanceText}>{item.distance} mi.</Text>
       </View>
       <View style={styles.cardRight}>
-        <Text style={styles.cardName} numberOfLines={1}>{item.name}</Text>
-        <Text style={styles.cardAddress} numberOfLines={1}>{item.address}</Text>
-        <StarRating rating={item.rating} />
+        <Text style={styles.cardName} numberOfLines={2}>{item.name}</Text>
+        <Text style={styles.cardAddress} numberOfLines={1}>
+          {item.address}, {item.city}, {item.state}
+        </Text>
+        {item.phone ? (
+          <View style={styles.phoneRow}>
+            <Ionicons name="call-outline" size={12} color={Colors.teal} />
+            <Text style={styles.phoneText}>{item.phone}</Text>
+          </View>
+        ) : null}
+        <View style={styles.typeBadge}>
+          <Text style={styles.typeBadgeText}>{item.type}</Text>
+        </View>
       </View>
     </TouchableOpacity>
   );
 }
 
+function EmptyState({ message }: { message: string }) {
+  return (
+    <View style={styles.emptyState}>
+      <Text style={styles.emptyEmoji}>🔍</Text>
+      <Text style={styles.emptyText}>{message}</Text>
+    </View>
+  );
+}
+
 export default function DirectoryScreen() {
   const [activeFilter, setActiveFilter] = useState<FilterType>('All');
+  const [facilities, setFacilities] = useState<Facility[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const [locationLabel, setLocationLabel] = useState('Your Location');
+
+  const loadFacilities = useCallback(async () => {
+    setLoading(true);
+    setLocationError(null);
+
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      setLocationError('Location permission denied. Please enable it in settings to find nearby resources.');
+      setLoading(false);
+      return;
+    }
+
+    const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+    const { latitude, longitude } = loc.coords;
+
+    const [place] = await Location.reverseGeocodeAsync({ latitude, longitude });
+    if (place) {
+      setLocationLabel(`${place.city ?? place.region ?? 'Your Area'}, ${place.region ?? ''}`);
+    }
+
+    const results = await fetchFacilities(latitude, longitude);
+    setFacilities(results);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    loadFacilities();
+  }, [loadFacilities]);
 
   const filtered = activeFilter === 'All'
-    ? MOCK_FACILITIES
-    : MOCK_FACILITIES.filter(f => f.type === activeFilter);
+    ? facilities
+    : facilities.filter((f) => f.type === activeFilter);
 
   return (
     <View style={styles.container}>
@@ -107,23 +116,17 @@ export default function DirectoryScreen() {
         <SafeAreaView>
           <View style={styles.headerRow}>
             <View>
-              <Text style={styles.headerTitle}>Find Rehab Center</Text>
+              <Text style={styles.headerTitle}>Find Resources</Text>
               <View style={styles.locationRow}>
                 <Ionicons name="location-outline" size={14} color={Colors.textSecondary} />
-                <Text style={styles.locationText}>Your Location</Text>
+                <Text style={styles.locationText}>{locationLabel}</Text>
               </View>
             </View>
-            <TouchableOpacity style={styles.searchIcon}>
-              <Ionicons name="search-outline" size={24} color={Colors.textPrimary} />
+            <TouchableOpacity style={styles.searchIcon} onPress={loadFacilities}>
+              <Ionicons name="refresh-outline" size={24} color={Colors.textPrimary} />
             </TouchableOpacity>
           </View>
         </SafeAreaView>
-      </View>
-
-      {/* Illustration bar */}
-      <View style={styles.illustrationBar}>
-        <Text style={styles.illustrationEmoji}>🔍</Text>
-        <Text style={styles.illustrationText}>Search resources near you</Text>
       </View>
 
       {/* Filter chips */}
@@ -136,39 +139,50 @@ export default function DirectoryScreen() {
         {FILTERS.map((filter) => (
           <TouchableOpacity
             key={filter}
-            style={[
-              styles.chip,
-              activeFilter === filter && styles.chipActive,
-            ]}
+            style={[styles.chip, activeFilter === filter && styles.chipActive]}
             onPress={() => setActiveFilter(filter)}
             activeOpacity={0.8}
           >
-            <Text
-              style={[
-                styles.chipText,
-                activeFilter === filter && styles.chipTextActive,
-              ]}
-            >
+            <Text style={[styles.chipText, activeFilter === filter && styles.chipTextActive]}>
               {filter}
             </Text>
           </TouchableOpacity>
         ))}
       </ScrollView>
 
-      {/* Facility list */}
-      <FlatList
-        data={filtered}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <FacilityCard item={item} />}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-      />
-
-      {/* Map toggle button */}
-      <TouchableOpacity style={styles.mapButton} activeOpacity={0.9}>
-        <Ionicons name="map-outline" size={18} color={Colors.bgDark} />
-        <Text style={styles.mapButtonText}>Map</Text>
-      </TouchableOpacity>
+      {/* Content */}
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={Colors.teal} />
+          <Text style={styles.loadingText}>Finding resources near you...</Text>
+        </View>
+      ) : locationError ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyEmoji}>📍</Text>
+          <Text style={styles.emptyText}>{locationError}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={loadFacilities}>
+            <Text style={styles.retryButtonText}>Try Again</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <FlatList
+          data={filtered}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => <FacilityCard item={item} />}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <EmptyState message="No facilities found in this category. Try a different filter or expand your search area." />
+          }
+          ListHeaderComponent={
+            facilities.length > 0 ? (
+              <Text style={styles.resultCount}>
+                {filtered.length} resource{filtered.length !== 1 ? 's' : ''} near you
+              </Text>
+            ) : null
+          }
+        />
+      )}
     </View>
   );
 }
@@ -207,24 +221,9 @@ const styles = StyleSheet.create({
   searchIcon: {
     padding: 4,
   },
-  illustrationBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 20,
-    gap: 10,
-    backgroundColor: Colors.bgPrimary,
-  },
-  illustrationEmoji: {
-    fontSize: 32,
-  },
-  illustrationText: {
-    fontSize: 15,
-    color: Colors.textSecondary,
-  },
   filterScroll: {
-    maxHeight: 52,
-    marginBottom: 12,
+    maxHeight: 56,
+    marginVertical: 12,
   },
   filterContent: {
     paddingHorizontal: 16,
@@ -249,9 +248,28 @@ const styles = StyleSheet.create({
   chipTextActive: {
     color: Colors.chipTextActive,
   },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 16,
+  },
+  loadingText: {
+    fontSize: 15,
+    fontFamily: Fonts.medium,
+    color: Colors.textSecondary,
+  },
+  resultCount: {
+    fontSize: 13,
+    fontFamily: Fonts.medium,
+    color: Colors.textSecondary,
+    paddingHorizontal: 4,
+    paddingBottom: 10,
+  },
   listContent: {
     paddingHorizontal: 16,
     paddingBottom: 100,
+    paddingTop: 4,
   },
   card: {
     flexDirection: 'row',
@@ -259,12 +277,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 14,
     marginBottom: 10,
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   cardLeft: {
     alignItems: 'center',
     width: 52,
     marginRight: 12,
+    paddingTop: 2,
   },
   distanceText: {
     fontSize: 11,
@@ -274,17 +293,69 @@ const styles = StyleSheet.create({
   },
   cardRight: {
     flex: 1,
+    gap: 4,
   },
   cardName: {
     fontSize: 14,
     fontFamily: Fonts.bold,
     color: Colors.textPrimary,
-    marginBottom: 3,
+    lineHeight: 20,
   },
   cardAddress: {
     fontSize: 12,
     color: Colors.textSecondary,
-    marginBottom: 5,
+  },
+  phoneRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  phoneText: {
+    fontSize: 12,
+    color: Colors.teal,
+    fontFamily: Fonts.medium,
+  },
+  typeBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(62,207,192,0.15)',
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    marginTop: 2,
+  },
+  typeBadgeText: {
+    fontSize: 11,
+    fontFamily: Fonts.semiBold,
+    color: Colors.teal,
+  },
+  emptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 32,
+    gap: 12,
+  },
+  emptyEmoji: {
+    fontSize: 40,
+  },
+  emptyText: {
+    fontSize: 15,
+    fontFamily: Fonts.medium,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  retryButton: {
+    marginTop: 8,
+    backgroundColor: Colors.teal,
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 28,
+  },
+  retryButtonText: {
+    fontSize: 15,
+    fontFamily: Fonts.bold,
+    color: Colors.bgDark,
   },
   ratingRow: {
     flexDirection: 'row',
@@ -294,27 +365,5 @@ const styles = StyleSheet.create({
   ratingText: {
     fontSize: 12,
     color: Colors.textSecondary,
-  },
-  mapButton: {
-    position: 'absolute',
-    bottom: 24,
-    right: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.surface,
-    borderRadius: 24,
-    paddingVertical: 10,
-    paddingHorizontal: 18,
-    gap: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  mapButtonText: {
-    fontSize: 14,
-    fontFamily: Fonts.semiBold,
-    color: Colors.bgDark,
   },
 });
