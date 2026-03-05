@@ -1,61 +1,66 @@
 import { Tabs } from 'expo-router';
+import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
+
+function SOSTabButton({ onPress }: { onPress?: () => void }) {
+  return (
+    <TouchableOpacity style={styles.sosWrapper} onPress={onPress} activeOpacity={0.85}>
+      <View style={styles.sosButton}>
+        <Text style={styles.sosText}>SOS</Text>
+      </View>
+    </TouchableOpacity>
+  );
+}
 
 export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
+        headerShown: false,
         tabBarActiveTintColor: Colors.tabBarActive,
         tabBarInactiveTintColor: Colors.tabBarInactive,
-        tabBarStyle: {
-          backgroundColor: Colors.tabBar,
-          borderTopColor: Colors.border,
-          height: 60,
-          paddingBottom: 8,
-        },
-        headerStyle: {
-          backgroundColor: Colors.surface,
-        },
-        headerTintColor: Colors.textPrimary,
-        headerTitleStyle: {
-          fontWeight: '700',
-          fontSize: 18,
-        },
+        tabBarStyle: styles.tabBar,
+        tabBarShowLabel: false,
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
           tabBarIcon: ({ color, size }) => (
-            <TabIcon name="home" color={color} size={size} />
+            <Ionicons name="home" size={size} color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="directory"
+        name="messages"
         options={{
-          title: 'Directory',
           tabBarIcon: ({ color, size }) => (
-            <TabIcon name="map-pin" color={color} size={size} />
+            <Ionicons name="chatbox" size={size} color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="trending"
+        name="sos"
         options={{
-          title: 'Trending',
-          tabBarIcon: ({ color, size }) => (
-            <TabIcon name="trending-up" color={color} size={size} />
+          tabBarButton: (props) => (
+            <SOSTabButton onPress={props.onPress ?? undefined} />
           ),
         }}
       />
       <Tabs.Screen
-        name="profile"
+        name="leaderboard"
         options={{
-          title: 'Profile',
           tabBarIcon: ({ color, size }) => (
-            <TabIcon name="user" color={color} size={size} />
+            <Ionicons name="trophy" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="create"
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="add" size={size + 4} color={color} />
           ),
         }}
       />
@@ -63,6 +68,38 @@ export default function TabLayout() {
   );
 }
 
-function TabIcon({ name, color, size }: { name: string; color: string; size: number }) {
-  return null;
-}
+const styles = StyleSheet.create({
+  tabBar: {
+    backgroundColor: Colors.tabBar,
+    borderTopWidth: 0,
+    height: 72,
+    paddingBottom: 8,
+    paddingTop: 8,
+    elevation: 0,
+  },
+  sosWrapper: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    top: -12,
+  },
+  sosButton: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: Colors.sos,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+  sosText: {
+    color: Colors.sosText,
+    fontWeight: '800',
+    fontSize: 13,
+    letterSpacing: 0.5,
+  },
+});
