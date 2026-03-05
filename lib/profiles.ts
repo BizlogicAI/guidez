@@ -4,6 +4,8 @@ export interface Profile {
   id: string;
   user_id: string;
   username: string;
+  avatar_url: string | null;
+  sobriety_date: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -53,6 +55,31 @@ export async function updateUsername(userId: string, username: string): Promise<
   if (error) throw new Error(error.message);
 }
 
+export async function uploadAvatar(userId: string, localUri: string): Promise<string> {
+  const response = await fetch(localUri);
+  const blob = await response.blob();
+  const ext = localUri.split('.').pop()?.split('?')[0] ?? 'jpg';
+  const path = `${userId}/avatar.${ext}`;
+
+  const { error } = await supabase.storage
+    .from('avatars')
+    .upload(path, blob, { upsert: true, contentType: `image/${ext}` });
+
+  if (error) throw new Error(error.message);
+
+  const { data } = supabase.storage.from('avatars').getPublicUrl(path);
+  return `${data.publicUrl}?t=${Date.now()}`;
+}
+
+export async function updateAvatarUrl(userId: string, avatarUrl: string): Promise<void> {
+  const { error } = await supabase
+    .from('profiles')
+    .update({ avatar_url: avatarUrl, updated_at: new Date().toISOString() })
+    .eq('user_id', userId);
+
+  if (error) throw new Error(error.message);
+}
+
 export async function updateEmail(newEmail: string): Promise<void> {
   const { error } = await supabase.auth.updateUser({ email: newEmail });
   if (error) throw new Error(error.message);
@@ -60,5 +87,13 @@ export async function updateEmail(newEmail: string): Promise<void> {
 
 export async function updatePassword(newPassword: string): Promise<void> {
   const { error } = await supabase.auth.updateUser({ password: newPassword });
+  if (error) throw new Error(error.message);
+}
+
+export async function updateSobrietyDate(userId: string, date: string | null): Promise<void> {
+  const { error } = await supabase
+    .from('profiles')
+    .update({ sobriety_date: date, updated_at: new Date().toISOString() })
+    .eq('user_id', userId);
   if (error) throw new Error(error.message);
 }

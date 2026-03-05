@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { PostAvatar } from './PostAvatar';
 import { toggleLike } from '../lib/likes';
 import { createNotification } from '../lib/userNotifications';
+import { getDaysSober, getCurrentMilestone } from '../lib/leaderboard';
 import type { FeedPost } from '../lib/feed';
 import { Colors } from '../constants/colors';
 import { Fonts } from '../constants/fonts';
@@ -31,6 +32,14 @@ export function PostCard({ post, currentUserId, currentUsername, onLikeChange }:
   const [liked, setLiked] = useState(post.is_liked);
   const [likeCount, setLikeCount] = useState(post.like_count);
   const [liking, setLiking] = useState(false);
+
+  const milestoneBadge = post.sobriety_date
+    ? (getCurrentMilestone(getDaysSober(post.sobriety_date))?.emoji ?? null)
+    : null;
+
+  const openComments = () => {
+    router.push(`/feed/${post.id}/comments?ownerId=${post.user_id}`);
+  };
 
   const handleLike = async () => {
     if (liking) return;
@@ -59,13 +68,14 @@ export function PostCard({ post, currentUserId, currentUsername, onLikeChange }:
   };
 
   return (
-    <View style={styles.card}>
+    <TouchableOpacity style={styles.card} activeOpacity={0.92} onPress={openComments}>
       <View style={styles.header}>
-        <PostAvatar username={post.username} size={38} />
+        <PostAvatar username={post.username} avatarUrl={post.avatar_url} milestoneBadge={milestoneBadge} size={38} />
         <TouchableOpacity
           style={styles.headerText}
           activeOpacity={post.user_id !== currentUserId ? 0.7 : 1}
-          onPress={() => {
+          onPress={(e) => {
+            e.stopPropagation();
             if (post.user_id !== currentUserId) {
               router.push(`/messages/${post.user_id}`);
             }
@@ -79,7 +89,11 @@ export function PostCard({ post, currentUserId, currentUsername, onLikeChange }:
       <Text style={styles.content}>{post.content}</Text>
 
       <View style={styles.actions}>
-        <TouchableOpacity style={styles.actionBtn} onPress={handleLike} activeOpacity={0.7}>
+        <TouchableOpacity
+          style={styles.actionBtn}
+          onPress={(e) => { e.stopPropagation(); handleLike(); }}
+          activeOpacity={0.7}
+        >
           <Ionicons
             name={liked ? 'heart' : 'heart-outline'}
             size={20}
@@ -88,16 +102,12 @@ export function PostCard({ post, currentUserId, currentUsername, onLikeChange }:
           <Text style={[styles.actionCount, liked && styles.likedCount]}>{likeCount}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.actionBtn}
-          onPress={() => router.push(`/feed/${post.id}/comments?ownerId=${post.user_id}`)}
-          activeOpacity={0.7}
-        >
+        <TouchableOpacity style={styles.actionBtn} onPress={openComments} activeOpacity={0.7}>
           <Ionicons name="chatbubble-outline" size={19} color={Colors.textSecondary} />
           <Text style={styles.actionCount}>{post.comment_count}</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 

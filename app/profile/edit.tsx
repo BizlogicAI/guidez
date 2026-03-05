@@ -10,16 +10,20 @@ import {
   Platform,
   Alert,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../../lib/context/AuthContext';
 import {
   checkUsernameAvailability,
   updateUsername,
   updateEmail,
   updatePassword,
+  uploadAvatar,
+  updateAvatarUrl,
 } from '../../lib/profiles';
 import { Colors } from '../../constants/colors';
 import { Fonts } from '../../constants/fonts';
@@ -41,9 +45,11 @@ export default function EditProfileScreen() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
+  const [avatarUri, setAvatarUri] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
   const [saving, setSaving] = useState(false);
 
-  // Debounced username check
   useEffect(() => {
     const trimmed = username.trim().toLowerCase();
     if (trimmed === currentUsername.toLowerCase()) {
@@ -64,13 +70,33 @@ export default function EditProfileScreen() {
     return () => clearTimeout(timer);
   }, [username, currentUsername, user?.id]);
 
+  const pickAvatar = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission needed', 'Please allow access to your photo library to set a profile picture.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      setAvatarUri(result.assets[0].uri);
+    }
+  };
+
   const handleSave = useCallback(async () => {
     const trimmedUsername = username.trim().toLowerCase();
     const usernameChanged = trimmedUsername !== currentUsername.toLowerCase();
     const emailChanged = email.trim() !== currentEmail;
     const passwordChanged = newPassword.length > 0;
+    const avatarChanged = avatarUri !== null;
 
-    if (!usernameChanged && !emailChanged && !passwordChanged) {
+    if (!usernameChanged && !emailChanged && !passwordChanged && !avatarChanged) {
       router.back();
       return;
     }
@@ -98,6 +124,12 @@ export default function EditProfileScreen() {
 
     setSaving(true);
     try {
+      if (avatarChanged && user?.id) {
+        setUploadingAvatar(true);
+        const publicUrl = await uploadAvatar(user.id, avatarUri!);
+        await updateAvatarUrl(user.id, publicUrl);
+        setUploadingAvatar(false);
+      }
       if (usernameChanged && user?.id) {
         await updateUsername(user.id, trimmedUsername);
       }
@@ -116,11 +148,12 @@ export default function EditProfileScreen() {
       Alert.alert('Update Failed', message);
     } finally {
       setSaving(false);
+      setUploadingAvatar(false);
     }
   }, [
     username, currentUsername, email, currentEmail,
     newPassword, confirmPassword, usernameStatus,
-    user?.id, refreshProfile,
+    user?.id, refreshProfile, avatarUri,
   ]);
 
   const usernameStatusIcon = () => {
@@ -129,6 +162,8 @@ export default function EditProfileScreen() {
     if (usernameStatus === 'taken') return <Ionicons name="close-circle" size={20} color={Colors.danger} />;
     return null;
   };
+
+  const displayAvatarUri = avatarUri ?? profile?.avatar_url;
 
   return (
     <KeyboardAvoidingView
@@ -153,6 +188,28 @@ export default function EditProfileScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+
+        {/* Avatar */}
+        <View style={styles.avatarSection}>
+          <TouchableOpacity onPress={pickAvatar} activeOpacity={0.8} style={styles.avatarWrapper}>
+            {displayAvatarUri ? (
+              <Image source={{ uri: displayAvatarUri }} style={styles.avatarImage} />
+            ) : (
+              <View style={styles.avatarPlaceholder}>
+                <Text style={styles.avatarInitial}>
+                  {(currentUsername || 'U').charAt(0).toUpperCase()}
+                </Text>
+              </View>
+            )}
+            <View style={styles.avatarEditBadge}>
+              {uploadingAvatar
+                ? <ActivityIndicator size="small" color={Colors.bgDark} />
+                : <Ionicons name="camera" size={14} color={Colors.bgDark} />
+              }
+            </View>
+          </TouchableOpacity>
+          <Text style={styles.avatarHint}>Tap to change photo</Text>
+        </View>
 
         {/* Username */}
         <Text style={styles.sectionLabel}>USERNAME</Text>
@@ -258,6 +315,54 @@ const styles = StyleSheet.create({
   content: {
     padding: 20,
     paddingBottom: 40,
+  },
+  avatarSection: {
+    alignItems: 'center',
+    marginBottom: 28,
+  },
+  avatarWrapper: {
+    position: 'relative',
+    marginBottom: 8,
+  },
+  avatarImage: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    borderWidth: 2,
+    borderColor: Colors.teal,
+  },
+  avatarPlaceholder: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: 'rgba(62,207,192,0.2)',
+    borderWidth: 2,
+    borderColor: Colors.teal,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarInitial: {
+    fontSize: 36,
+    fontFamily: Fonts.bold,
+    color: Colors.teal,
+  },
+  avatarEditBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: Colors.teal,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: Colors.bgPrimary,
+  },
+  avatarHint: {
+    fontSize: 12,
+    fontFamily: Fonts.regular,
+    color: Colors.textMuted,
   },
   sectionLabel: {
     fontSize: 11,

@@ -6,6 +6,8 @@ export interface FeedPost {
   content: string;
   created_at: string;
   username: string;
+  avatar_url: string | null;
+  sobriety_date: string | null;
   like_count: number;
   comment_count: number;
   is_liked: boolean;
@@ -23,19 +25,53 @@ export async function fetchFeed(currentUserId: string, limit = 20, offset = 0): 
   const userIds = [...new Set(posts.map((p) => p.user_id))];
   const { data: profiles } = await supabase
     .from('profiles')
-    .select('user_id, username')
+    .select('user_id, username, avatar_url, sobriety_date')
     .in('user_id', userIds);
 
-  return posts.map((p) => ({
+  return posts.map((p) => {
+    const prof = profiles?.find((pr) => pr.user_id === p.user_id);
+    return {
+      id: p.id,
+      user_id: p.user_id,
+      content: p.content,
+      created_at: p.created_at,
+      username: prof?.username ?? `user_${p.user_id.slice(0, 6)}`,
+      avatar_url: prof?.avatar_url ?? null,
+      sobriety_date: prof?.sobriety_date ?? null,
+      like_count: p.likes?.length ?? 0,
+      comment_count: p.comments?.length ?? 0,
+      is_liked: p.likes?.some((l: { user_id: string }) => l.user_id === currentUserId) ?? false,
+    };
+  });
+}
+
+export async function fetchPost(postId: string, currentUserId: string): Promise<FeedPost | null> {
+  const { data: p, error } = await supabase
+    .from('posts')
+    .select('*, likes(id, user_id), comments(id)')
+    .eq('id', postId)
+    .single();
+
+  if (error || !p) return null;
+
+  const { data: profiles } = await supabase
+    .from('profiles')
+    .select('user_id, username, avatar_url, sobriety_date')
+    .eq('user_id', p.user_id);
+
+  const prof = profiles?.[0];
+  return {
     id: p.id,
     user_id: p.user_id,
     content: p.content,
     created_at: p.created_at,
-    username: profiles?.find((pr) => pr.user_id === p.user_id)?.username ?? 'member',
+    username: prof?.username ?? `user_${p.user_id.slice(0, 6)}`,
+    avatar_url: prof?.avatar_url ?? null,
+    sobriety_date: prof?.sobriety_date ?? null,
     like_count: p.likes?.length ?? 0,
     comment_count: p.comments?.length ?? 0,
     is_liked: p.likes?.some((l: { user_id: string }) => l.user_id === currentUserId) ?? false,
-  }));
+  };
 }
 
 export async function createPost(userId: string, content: string): Promise<void> {
