@@ -82,12 +82,12 @@ export async function fetchFacilities(
   latitude: number,
   longitude: number,
   distance = 25,
-  pageSize = 30
+  pageSize = 100
 ): Promise<Facility[]> {
   // sAddr format is lat,lng — comma must not be URL-encoded, build manually
   const url =
     `${BASE_URL}?sAddr=${latitude},${longitude}` +
-    `&sType=SA,MH,HO&distance=${distance}&pageSize=${pageSize}&page=1`;
+    `&sType=SA,MH&distance=${distance}&pageSize=${pageSize}&page=1`;
 
   const res = await fetch(url);
 
