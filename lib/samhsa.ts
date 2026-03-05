@@ -1,5 +1,16 @@
 const BASE_URL = 'https://findtreatment.gov/locator/exportsAsJson/v2';
 
+// In-memory store so the detail screen can look up a facility by ID
+const facilityStore = new Map<string, Facility>();
+
+export function storeFacilities(facilities: Facility[]): void {
+  for (const f of facilities) facilityStore.set(f.id, f);
+}
+
+export function getFacilityById(id: string): Facility | null {
+  return facilityStore.get(id) ?? null;
+}
+
 export type FacilityType = 'Mental Health' | 'Rehab' | 'Hospitals' | 'Detox' | 'Sober Living';
 
 export interface Facility {
@@ -76,7 +87,7 @@ export async function fetchFacilities(
   // sAddr format is lat,lng — comma must not be URL-encoded, build manually
   const url =
     `${BASE_URL}?sAddr=${latitude},${longitude}` +
-    `&sType=SA,MH&distance=${distance}&pageSize=${pageSize}&page=1`;
+    `&sType=SA,MH,HO&distance=${distance}&pageSize=${pageSize}&page=1`;
 
   const res = await fetch(url);
 

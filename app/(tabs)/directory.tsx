@@ -13,9 +13,10 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { Colors } from '../../constants/colors';
 import { Fonts } from '../../constants/fonts';
-import { fetchFacilities, Facility, FacilityType } from '../../lib/samhsa';
+import { fetchFacilities, storeFacilities, Facility, FacilityType } from '../../lib/samhsa';
 
 type FilterType = 'All' | FacilityType;
 
@@ -23,26 +24,12 @@ const FILTERS: FilterType[] = ['All', 'Hospitals', 'Detox', 'Rehab', 'Mental Hea
 const DISTANCES = [10, 25, 50, 100];
 
 function FacilityCard({ item }: { item: Facility }) {
-  const handleCall = () => {
-    if (item.phone) Linking.openURL(`tel:${item.phone.replace(/\D/g, '')}`);
-  };
-
-  const handleWebsite = () => {
-    const url = item.website.startsWith('http') ? item.website : `https://${item.website}`;
-    Linking.openURL(url);
-  };
-
-  const handleReviews = () => {
-    const name = encodeURIComponent(item.name);
-    // Opens Google Maps pinned to the facility's exact coordinates with its name —
-    // lands directly on the place card, one tap to see reviews
-    Linking.openURL(
-      `https://www.google.com/maps/search/${name}/@${item.latitude},${item.longitude},17z`
-    );
-  };
-
   return (
-    <View style={styles.card}>
+    <TouchableOpacity
+      style={styles.card}
+      activeOpacity={0.75}
+      onPress={() => router.push({ pathname: '/directory/[facilityId]', params: { facilityId: item.id } })}
+    >
       <View style={styles.cardLeft}>
         <Ionicons name="location-outline" size={22} color={Colors.textPrimary} />
         <Text style={styles.distanceText}>{item.distance} mi.</Text>
@@ -52,31 +39,12 @@ function FacilityCard({ item }: { item: Facility }) {
         <Text style={styles.cardAddress} numberOfLines={1}>
           {item.address}, {item.city}, {item.state}
         </Text>
-
         <View style={styles.typeBadge}>
           <Text style={styles.typeBadgeText}>{item.type}</Text>
         </View>
-
-        <View style={styles.cardActions}>
-          {item.phone ? (
-            <TouchableOpacity style={styles.actionButton} onPress={handleCall}>
-              <Ionicons name="call-outline" size={13} color={Colors.teal} />
-              <Text style={styles.actionText}>Call</Text>
-            </TouchableOpacity>
-          ) : null}
-          {item.website ? (
-            <TouchableOpacity style={styles.actionButton} onPress={handleWebsite}>
-              <Ionicons name="globe-outline" size={13} color={Colors.teal} />
-              <Text style={styles.actionText}>Website</Text>
-            </TouchableOpacity>
-          ) : null}
-          <TouchableOpacity style={styles.actionButton} onPress={handleReviews}>
-            <Ionicons name="star-outline" size={13} color={Colors.teal} />
-            <Text style={styles.actionText}>Reviews</Text>
-          </TouchableOpacity>
-        </View>
       </View>
-    </View>
+      <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} />
+    </TouchableOpacity>
   );
 }
 
@@ -133,6 +101,7 @@ export default function DirectoryScreen() {
       }
 
       const results = await fetchFacilities(lat, lng, distance);
+      storeFacilities(results);
       setFacilities(results);
     } catch {
       setLocationError('Could not load facilities. Check your internet connection and try again.');
