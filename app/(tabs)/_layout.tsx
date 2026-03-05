@@ -44,7 +44,7 @@ export default function TabLayout() {
         name="directory"
         options={{
           tabBarButton: (props) => (
-            <DirectoryTabButton onPress={props.onPress ?? undefined} />
+            <DirectoryTabButton onPress={props.onPress ? () => props.onPress!({} as any) : undefined} />
           ),
         }}
       />
