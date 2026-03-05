@@ -33,6 +33,8 @@ export default function RootLayout() {
         <Stack.Screen name="auth/login" />
         <Stack.Screen name="auth/signup" />
         <Stack.Screen name="profile/edit" />
+        <Stack.Screen name="feed/[postId]/comments" />
+        <Stack.Screen name="messages/[userId]/index" />
       </Stack>
     </AuthProvider>
   );
