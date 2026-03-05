@@ -123,14 +123,14 @@ export default function DirectoryScreen() {
     setLoading(false);
   }, []);
 
+  // Only run on mount — distance changes are handled by handleDistanceChange with cached coords
   useEffect(() => {
     loadFacilities(searchDistance);
-  }, [loadFacilities, searchDistance]);
+  }, [loadFacilities]);
 
   const handleDistanceChange = (distance: number) => {
     setSearchDistance(distance);
     setFacilities([]);
-    // Re-use cached coords if available
     loadFacilities(distance, coords ?? undefined);
   };
 
