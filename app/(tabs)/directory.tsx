@@ -147,38 +147,38 @@ export default function DirectoryScreen() {
 
       {/* Content */}
       <View style={styles.contentArea}>
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.teal} />
-          <Text style={styles.loadingText}>Finding resources near you...</Text>
-        </View>
-      ) : locationError ? (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyEmoji}>📍</Text>
-          <Text style={styles.emptyText}>{locationError}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={loadFacilities}>
-            <Text style={styles.retryButtonText}>Try Again</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <FlatList
-          data={filtered}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <FacilityCard item={item} />}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
-            <EmptyState message="No facilities found in this category. Try a different filter or expand your search area." />
-          }
-          ListHeaderComponent={
-            facilities.length > 0 ? (
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={Colors.teal} />
+            <Text style={styles.loadingText}>Finding resources near you...</Text>
+          </View>
+        ) : locationError ? (
+          <View style={styles.errorState}>
+            <Text style={styles.emptyEmoji}>📍</Text>
+            <Text style={styles.emptyText}>{locationError}</Text>
+            <TouchableOpacity style={styles.retryButton} onPress={loadFacilities}>
+              <Text style={styles.retryButtonText}>Try Again</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <>
+            {facilities.length > 0 && (
               <Text style={styles.resultCount}>
                 {filtered.length} resource{filtered.length !== 1 ? 's' : ''} near you
               </Text>
-            ) : null
-          }
-        />
-      )}
+            )}
+            <FlatList
+              data={filtered}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => <FacilityCard item={item} />}
+              contentContainerStyle={styles.listContent}
+              showsVerticalScrollIndicator={false}
+              ListEmptyComponent={
+                <EmptyState message="No facilities found in this category. Try a different filter." />
+              }
+            />
+          </>
+        )}
       </View>
     </View>
   );
@@ -265,13 +265,13 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: Fonts.medium,
     color: Colors.textSecondary,
-    paddingHorizontal: 4,
-    paddingBottom: 10,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 6,
   },
   listContent: {
     paddingHorizontal: 16,
     paddingBottom: 100,
-    paddingTop: 4,
   },
   card: {
     flexDirection: 'row',
@@ -330,10 +330,16 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.semiBold,
     color: Colors.teal,
   },
-  emptyState: {
+  errorState: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    padding: 32,
+    gap: 12,
+  },
+  emptyState: {
+    paddingTop: 40,
+    alignItems: 'center',
     padding: 32,
     gap: 12,
   },

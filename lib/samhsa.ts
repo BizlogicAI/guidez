@@ -54,9 +54,9 @@ export async function fetchFacilities(
   distance = 25,
   pageSize = 30
 ): Promise<Facility[]> {
-  // sAddr must not have the comma URL-encoded — build manually
+  // sAddr format is lat,lng — comma must not be URL-encoded, build manually
   const url =
-    `${BASE_URL}?sAddr=${longitude},${latitude}` +
+    `${BASE_URL}?sAddr=${latitude},${longitude}` +
     `&limitType=0&limitValue=${distance}&pageSize=${pageSize}&page=1`;
 
   const res = await fetch(url);
