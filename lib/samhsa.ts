@@ -72,7 +72,15 @@ function mapType(row: SAMHSARow): FacilityType {
 
   if (desc.includes('detox')) return 'Detox';
   if (desc.includes('hospital') || desc.includes('inpatient medical')) return 'Hospitals';
-  if (desc.includes('sober living') || desc.includes('halfway house')) return 'Sober Living';
+  if (
+    desc.includes('sober living') ||
+    desc.includes('halfway house') ||
+    desc.includes('recovery house') ||
+    desc.includes('recovery residence') ||
+    desc.includes('transitional living') ||
+    desc.includes('oxford house') ||
+    desc.includes('supportive housing')
+  ) return 'Sober Living';
   if (desc.includes('residential') && (code === 'SA' || code === 'HRSA')) return 'Sober Living';
 
   return 'Rehab';
