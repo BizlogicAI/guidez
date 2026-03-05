@@ -79,15 +79,15 @@ export default function DirectoryScreen() {
       return;
     }
 
-    const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-    const { latitude, longitude } = loc.coords;
-
-    const [place] = await Location.reverseGeocodeAsync({ latitude, longitude });
-    if (place) {
-      setLocationLabel(`${place.city ?? place.region ?? 'Your Area'}, ${place.region ?? ''}`);
-    }
-
     try {
+      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      const { latitude, longitude } = loc.coords;
+
+      const [place] = await Location.reverseGeocodeAsync({ latitude, longitude });
+      if (place) {
+        setLocationLabel(`${place.city ?? place.region ?? 'Your Area'}, ${place.region ?? ''}`);
+      }
+
       const results = await fetchFacilities(latitude, longitude);
       setFacilities(results);
     } catch {
@@ -164,7 +164,8 @@ export default function DirectoryScreen() {
           <>
             {facilities.length > 0 && (
               <Text style={styles.resultCount}>
-                {filtered.length} resource{filtered.length !== 1 ? 's' : ''} near you
+                {filtered.length} resource{filtered.length !== 1 ? 's' : ''}
+                {activeFilter === 'All' ? ' near you' : ` in ${activeFilter}`}
               </Text>
             )}
             <FlatList

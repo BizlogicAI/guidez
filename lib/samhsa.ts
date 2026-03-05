@@ -67,8 +67,8 @@ export async function fetchFacilities(
 
   const data: SAMHSAResponse = await res.json();
 
-  return data.rows.map((row, i) => ({
-    id: `${i}-${row.latitude}-${row.longitude}`,
+  return data.rows.map((row) => ({
+    id: `${row.name1}-${row.street1}-${row.city}`.replace(/\s+/g, '-').toLowerCase(),
     name: row.name1,
     address: row.street1,
     city: row.city,
