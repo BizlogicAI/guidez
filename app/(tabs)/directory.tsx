@@ -17,7 +17,7 @@ import { router } from 'expo-router';
 import { Colors } from '../../constants/colors';
 import { Fonts } from '../../constants/fonts';
 import { fetchFacilities, storeFacilities, Facility, FacilityType } from '../../lib/samhsa';
-import { fetchHospitals } from '../../lib/hospitals';
+import { fetchAllOsmFacilities } from '../../lib/hospitals';
 
 type FilterType = 'All' | FacilityType;
 
@@ -101,15 +101,15 @@ export default function DirectoryScreen() {
         }
       }
 
-      const [samhsaResults, hospitalResults] = await Promise.all([
+      const [samhsaResults, osmResults] = await Promise.all([
         fetchFacilities(lat, lng, distance),
-        fetchHospitals(lat, lng, distance),
+        fetchAllOsmFacilities(lat, lng, distance),
       ]);
 
       // Merge and deduplicate by name+city (hospital may appear in both sources)
       const seen = new Set<string>();
       const merged: Facility[] = [];
-      for (const f of [...samhsaResults, ...hospitalResults]) {
+      for (const f of [...samhsaResults, ...osmResults]) {
         const key = `${f.name}|${f.city}`.toLowerCase();
         if (!seen.has(key)) { seen.add(key); merged.push(f); }
       }
