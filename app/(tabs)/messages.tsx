@@ -61,6 +61,9 @@ function MessagesContent() {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton} hitSlop={8}>
+          <Ionicons name="arrow-back" size={24} color={Colors.textPrimary} />
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>Messages</Text>
       </View>
 
@@ -126,8 +129,14 @@ export default function MessagesScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bgPrimary },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 12,
+    gap: 12,
+  },
+  backButton: {
+    padding: 4,
   },
   headerTitle: { fontSize: 22, fontFamily: Fonts.bold, color: Colors.textPrimary },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
