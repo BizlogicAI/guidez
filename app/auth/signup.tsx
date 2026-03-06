@@ -18,13 +18,14 @@ import { Colors } from '../../constants/colors';
 import { Fonts } from '../../constants/fonts';
 
 export default function SignupScreen() {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSignup = async () => {
-    if (!email || !password || !username) {
+    if (!name || !email || !password || !username) {
       Alert.alert('Error', 'Please fill in all fields.');
       return;
     }
@@ -46,7 +47,7 @@ export default function SignupScreen() {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { username: username.toLowerCase().trim() } },
+      options: { data: { username: username.toLowerCase().trim(), full_name: name.trim() } },
     });
 
     if (error) {
@@ -82,6 +83,16 @@ export default function SignupScreen() {
         </TouchableOpacity>
         <Text style={styles.title}>Create Account</Text>
         <Text style={styles.subtitle}>Join the Guidez community</Text>
+
+        <TextInput
+          style={styles.input}
+          placeholder="Full Name"
+          placeholderTextColor={Colors.textMuted}
+          value={name}
+          onChangeText={setName}
+          autoCapitalize="words"
+          autoComplete="name"
+        />
 
         <TextInput
           style={styles.input}

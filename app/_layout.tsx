@@ -1,4 +1,4 @@
-import { Stack } from 'expo-router';
+import { Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View } from 'react-native';
 import { useFonts } from 'expo-font';
@@ -73,6 +73,13 @@ export default function RootLayout() {
     Raleway_800ExtraBold,
   });
 
+  useEffect(() => {
+    if (!fontsLoaded) return;
+    AsyncStorage.getItem('onboarding_seen').then((val) => {
+      if (!val) router.replace('/onboarding');
+    });
+  }, [fontsLoaded]);
+
   if (!fontsLoaded) {
     return <View style={{ flex: 1, backgroundColor: '#17587A' }} />;
   }
@@ -83,6 +90,7 @@ export default function RootLayout() {
       <BroadcastNotificationListener />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="onboarding" />
         <Stack.Screen name="directory/index" />
         <Stack.Screen name="auth/login" />
         <Stack.Screen name="auth/signup" />
