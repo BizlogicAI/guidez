@@ -139,7 +139,7 @@ export default function FacilityDetailScreen() {
             />
           ) : null}
 
-          {facility.phone && (facility.website || true) ? <View style={styles.divider} /> : null}
+          {facility.phone ? <View style={styles.divider} /> : null}
 
           <ActionRow
             icon="navigate-outline"

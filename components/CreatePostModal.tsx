@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { PostAvatar } from './PostAvatar';
 import { createPost } from '../lib/feed';
@@ -36,7 +37,7 @@ export function CreatePostModal({ visible, userId, username, onClose, onPosted }
       onPosted();
       onClose();
     } catch {
-      // silent — user can retry
+      Alert.alert('Error', 'Could not share your post. Please try again.');
     } finally {
       setPosting(false);
     }

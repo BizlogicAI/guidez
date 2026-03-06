@@ -54,7 +54,7 @@ function BroadcastNotificationListener() {
       }
     };
 
-    fetchMissed();
+    fetchMissed().catch(() => {});
 
     return () => {
       channel.unsubscribe();

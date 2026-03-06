@@ -75,9 +75,11 @@ export async function fetchThread(currentUserId: string, otherUserId: string): P
 }
 
 export async function sendMessage(senderId: string, receiverId: string, content: string): Promise<void> {
+  const trimmed = content.trim();
+  if (!trimmed || trimmed.length > 500) throw new Error('Message must be 1–500 characters.');
   const { error } = await supabase
     .from('messages')
-    .insert({ sender_id: senderId, receiver_id: receiverId, content });
+    .insert({ sender_id: senderId, receiver_id: receiverId, content: trimmed });
   if (error) throw new Error(error.message);
 }
 

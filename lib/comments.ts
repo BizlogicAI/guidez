@@ -43,13 +43,16 @@ export async function fetchComments(postId: string, currentUserId: string): Prom
       : Promise.resolve({ data: [] as { comment_id: string }[] }),
   ]);
 
-  const profiles = profilesResult.data ?? [];
-  const allLikes = allLikesResult.data ?? [];
+  const profileMap = new Map((profilesResult.data ?? []).map((p) => [p.user_id, p]));
+  const likeCountMap = new Map<string, number>();
+  for (const l of allLikesResult.data ?? []) {
+    likeCountMap.set(l.comment_id, (likeCountMap.get(l.comment_id) ?? 0) + 1);
+  }
   const myLikedIds = new Set((myLikesResult.data ?? []).map((l) => l.comment_id));
 
   return rows.map((r) => {
-    const prof = profiles.find((p) => p.user_id === r.user_id);
-    const likeCount = allLikes.filter((l) => l.comment_id === r.id).length;
+    const prof = profileMap.get(r.user_id);
+    const likeCount = likeCountMap.get(r.id) ?? 0;
     return {
       id: r.id,
       user_id: r.user_id,
@@ -66,9 +69,11 @@ export async function fetchComments(postId: string, currentUserId: string): Prom
 }
 
 export async function createComment(postId: string, userId: string, content: string): Promise<void> {
+  const trimmed = content.trim();
+  if (!trimmed || trimmed.length > 300) throw new Error('Comment must be 1–300 characters.');
   const { error } = await supabase
     .from('comments')
-    .insert({ post_id: postId, user_id: userId, content });
+    .insert({ post_id: postId, user_id: userId, content: trimmed });
   if (error) throw new Error(error.message);
 }
 

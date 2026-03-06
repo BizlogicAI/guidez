@@ -55,15 +55,27 @@ export async function updateUsername(userId: string, username: string): Promise<
   if (error) throw new Error(error.message);
 }
 
+const ALLOWED_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp'] as const;
+const MAX_AVATAR_BYTES = 5 * 1024 * 1024; // 5 MB
+
 export async function uploadAvatar(userId: string, localUri: string): Promise<string> {
+  const rawExt = localUri.split('.').pop()?.split('?')[0]?.toLowerCase() ?? '';
+  const ext = ALLOWED_IMAGE_EXTENSIONS.includes(rawExt as typeof ALLOWED_IMAGE_EXTENSIONS[number])
+    ? rawExt
+    : 'jpg';
+
   const response = await fetch(localUri);
   const blob = await response.blob();
-  const ext = localUri.split('.').pop()?.split('?')[0] ?? 'jpg';
+
+  if (blob.size > MAX_AVATAR_BYTES) {
+    throw new Error('Image must be smaller than 5 MB.');
+  }
+
   const path = `${userId}/avatar.${ext}`;
 
   const { error } = await supabase.storage
     .from('avatars')
-    .upload(path, blob, { upsert: true, contentType: `image/${ext}` });
+    .upload(path, blob, { upsert: true, contentType: ext === 'jpg' ? 'image/jpeg' : `image/${ext}` });
 
   if (error) throw new Error(error.message);
 

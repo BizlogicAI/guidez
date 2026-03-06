@@ -28,8 +28,10 @@ export async function fetchFeed(currentUserId: string, limit = 20, offset = 0): 
     .select('user_id, username, avatar_url, sobriety_date')
     .in('user_id', userIds);
 
+  const profileMap = new Map((profiles ?? []).map((pr) => [pr.user_id, pr]));
+
   return posts.map((p) => {
-    const prof = profiles?.find((pr) => pr.user_id === p.user_id);
+    const prof = profileMap.get(p.user_id);
     return {
       id: p.id,
       user_id: p.user_id,
@@ -75,7 +77,9 @@ export async function fetchPost(postId: string, currentUserId: string): Promise<
 }
 
 export async function createPost(userId: string, content: string): Promise<void> {
-  const { error } = await supabase.from('posts').insert({ user_id: userId, content });
+  const trimmed = content.trim();
+  if (!trimmed || trimmed.length > 500) throw new Error('Post content must be 1–500 characters.');
+  const { error } = await supabase.from('posts').insert({ user_id: userId, content: trimmed });
   if (error) throw new Error(error.message);
 }
 

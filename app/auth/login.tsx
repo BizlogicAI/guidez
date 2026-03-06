@@ -30,7 +30,7 @@ export default function LoginScreen() {
     setLoading(false);
 
     if (error) {
-      Alert.alert('Login Failed', error.message);
+      Alert.alert('Login Failed', 'Invalid email or password. Please try again.');
     } else {
       router.replace('/(tabs)');
     }

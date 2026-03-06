@@ -211,6 +211,7 @@ export default function DirectoryScreen() {
               returnKeyType="search"
               autoCapitalize="words"
               autoCorrect={false}
+              maxLength={100}
             />
             <TouchableOpacity style={styles.goButton} onPress={handleManualSearch}>
               <Text style={styles.goButtonText}>Go</Text>

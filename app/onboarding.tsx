@@ -42,7 +42,11 @@ const FEATURES = [
 ];
 
 async function completeOnboarding(dest: '/auth/signup' | '/auth/login') {
-  await AsyncStorage.setItem('onboarding_seen', 'true');
+  try {
+    await AsyncStorage.setItem('onboarding_seen', 'true');
+  } catch {
+    // Non-blocking — if storage fails, user will see onboarding again next launch
+  }
   router.replace(dest);
 }
 

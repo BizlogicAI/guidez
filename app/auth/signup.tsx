@@ -52,7 +52,7 @@ export default function SignupScreen() {
 
     if (error) {
       setLoading(false);
-      Alert.alert('Sign Up Failed', error.message);
+      Alert.alert('Sign Up Failed', 'Could not create your account. Please check your details and try again.');
       return;
     }
 
