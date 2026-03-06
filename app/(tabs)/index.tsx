@@ -27,6 +27,7 @@ import {
   type Mood,
   type MoodOption,
 } from '../../lib/checkins';
+import { getDailyQuote } from '../../lib/quotes';
 import { Colors } from '../../constants/colors';
 import { Fonts } from '../../constants/fonts';
 
@@ -39,17 +40,6 @@ const ILLUSTRATIONS = [
   { emoji: '🌸', label: 'Blooming' },
   { emoji: '💙', label: 'You Are Loved' },
   { emoji: '🕊️', label: 'Hope' },
-];
-
-const MESSAGES = [
-  '✨ Even on tough days, remember: You\'ve got this.',
-  '🌱 Every small step forward is progress worth celebrating.',
-  '💙 Asking for help is one of the bravest things you can do.',
-  '🌟 You are worthy of recovery, love, and happiness.',
-  '🦋 Healing is not linear — be patient with yourself.',
-  '☀️ Today is a new opportunity to grow and begin again.',
-  '🌊 It\'s okay to rest. You don\'t have to earn your peace.',
-  '🕊️ The strength you need is already inside you.',
 ];
 
 function AnimatedIllustration() {
@@ -97,23 +87,27 @@ function AnimatedIllustration() {
   );
 }
 
-function CyclingMessage() {
-  const [index, setIndex] = useState(0);
-  const opacity = useRef(new Animated.Value(1)).current;
+function DailyQuoteCard() {
+  const [quote, setQuote] = useState<{ text: string; author: string } | null>(null);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      Animated.timing(opacity, { toValue: 0, duration: 600, useNativeDriver: true }).start(() => {
-        setIndex((prev) => (prev + 1) % MESSAGES.length);
-        Animated.timing(opacity, { toValue: 1, duration: 600, useNativeDriver: true }).start();
-      });
-    }, 5000);
-    return () => clearInterval(interval);
+    getDailyQuote()
+      .then((q) => {
+        setQuote(q);
+        Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }).start();
+      })
+      .catch(() => {});
   }, []);
 
+  if (!quote) return null;
+
   return (
-    <Animated.View style={[styles.quoteContainer, { opacity }]}>
-      <Text style={styles.quote}>{MESSAGES[index]}</Text>
+    <Animated.View style={[styles.quoteCard, { opacity: fadeAnim }]}>
+      <Ionicons name="sunny-outline" size={20} color={Colors.accent} style={styles.quoteIcon} />
+      <Text style={styles.quoteLabel}>Quote of the Day</Text>
+      <Text style={styles.quoteText}>"{quote.text}"</Text>
+      <Text style={styles.quoteAuthor}>— {quote.author}</Text>
     </Animated.View>
   );
 }
@@ -247,7 +241,7 @@ export default function HomeScreen() {
         {user && <DailyCheckinCard userId={user.id} />}
 
         <AnimatedIllustration />
-        <CyclingMessage />
+        <DailyQuoteCard />
       </SafeAreaView>
     </View>
   );
@@ -338,6 +332,34 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
-  quoteContainer: { paddingHorizontal: 28, paddingBottom: 28, minHeight: 70, justifyContent: 'center' },
-  quote: { fontSize: 17, fontFamily: Fonts.medium, color: Colors.textPrimary, textAlign: 'center', lineHeight: 26 },
+  quoteCard: {
+    marginHorizontal: 20,
+    backgroundColor: Colors.bgCard,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  quoteIcon: { marginBottom: 4 },
+  quoteLabel: {
+    fontSize: 11,
+    fontFamily: Fonts.semiBold,
+    color: Colors.accent,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 8,
+  },
+  quoteText: {
+    fontSize: 16,
+    fontFamily: Fonts.medium,
+    color: Colors.textPrimary,
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 8,
+  },
+  quoteAuthor: {
+    fontSize: 12,
+    fontFamily: Fonts.regular,
+    color: Colors.textMuted,
+  },
 });
